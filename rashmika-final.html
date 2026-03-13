@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rashmika Srivastava — Data Scientist & AI Engineer</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=Jost:wght@200;300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS — single source of truth
+═══════════════════════════════════════════════ */
+:root {
+  --gold: #c9a96e;  --gold-l: #e8d5b0;  --gold-d: #8b6428;
+  --green: #39ff85; --blue: #38cfff;    --rose: #d4849a;  --red: #ff6b6b;
+  --bg: #04020a;    --bg2: #0a061a;     --text: #ede8e3;  --muted: #7a7080;
+  --border: rgba(201,169,110,0.12);
+  --ff-d: 'Cormorant Garamond', serif;
+  --ff-b: 'Jost', sans-serif;
+  --ff-m: 'Space Mono', monospace;
+  /* Easing curves */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* ═══════════════════════════════════════════════
+   RESET + BASE
+═══════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--ff-b);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  cursor: none;
+}
+body * { cursor: none !important; }
+
+/* Respect motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ═══════════════════════════════════════════════
+   PAGE 1: THE AWAKENING — Boot sequence overlay
+   Change: Added cinematic loading screen that types
+   "INITIALIZING DIGITAL IDENTITY" then fades out.
+   WHY: Creates intentional entry, emotional tone.
+═══════════════════════════════════════════════ */
+#boot {
+  position: fixed; inset: 0; z-index: 9000;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24px;
+  transition: opacity .8s var(--ease-out-expo), visibility .8s;
+}
+#boot.done { opacity: 0; visibility: hidden; pointer-events: none; }
+.boot-logo {
+  font-family: var(--ff-d); font-size: 11px; letter-spacing: 16px;
+  color: rgba(201,169,110,.3); text-transform: uppercase;
+  animation: fadeIn .6s ease both;
+}
+.boot-line {
+  width: 240px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  animation: bootLine 1.8s ease both;
+}
+@keyframes bootLine { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.boot-text {
+  font-family: var(--ff-m); font-size: 9px; letter-spacing: 3px;
+  color: var(--green); text-transform: uppercase;
+}
+.boot-bar {
+  width: 240px; height: 2px; background: rgba(255,255,255,.05);
+  overflow: hidden; border-radius: 1px;
+}
+.boot-fill {
+  height: 100%; background: linear-gradient(to right, var(--gold), var(--green));
+  width: 0; animation: bootFill 2s .3s var(--ease-out-expo) forwards;
+}
+@keyframes bootFill { to { width: 100%; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ═══════════════════════════════════════════════
+   CUSTOM CURSOR (unchanged, kept working)
+═══════════════════════════════════════════════ */
+#cur {
+  position: fixed; width: 8px; height: 8px;
+  background: var(--gold); border-radius: 50%;
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: difference;
+  will-change: left, top;
+}
+#cur-r {
+  position: fixed; width: 32px; height: 32px;
+  border: 1px solid rgba(201,169,110,.5); border-radius: 50%;
+  pointer-events: none; z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: width .15s, height .15s, border-color .15s;
+  will-change: left, top;
+}
+
+/* ═══════════════════════════════════════════════
+   UNIVERSE CANVAS (kept, fixed performance)
+   Change: Added will-change hint.
+   WHY: GPU compositing layer, smoother rendering.
+═══════════════════════════════════════════════ */
+#universe { position: fixed; inset: 0; z-index: 0; will-change: transform; }
+#universeCanvas { width: 100%; height: 100%; display: block; }
+#universeOverlay {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, transparent 40%, rgba(4,2,10,.65) 100%),
+    linear-gradient(to bottom, rgba(4,2,10,.6) 0%, transparent 12%, transparent 88%, rgba(4,2,10,.95) 100%);
+}
+
+#scrollBody { position: relative; z-index: 10; }
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+   Change: Added active-link tracking, progress bar.
+   WHY: User always knows where they are in the story.
+═══════════════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 64px;
+  background: linear-gradient(to bottom, rgba(4,2,10,.95), transparent);
+}
+/* Scroll progress bar — thin gold line at very top */
+#navProgress {
+  position: fixed; top: 0; left: 0; z-index: 501;
+  height: 2px; width: 0%;
+  background: linear-gradient(to right, var(--gold-d), var(--gold), var(--green));
+  transition: width .1s linear;
+}
+.nav-logo {
+  font-family: var(--ff-d); font-size: 16px; font-weight: 300;
+  letter-spacing: 8px; color: var(--gold-l); text-transform: uppercase;
+}
+.nav-links { display: flex; gap: 40px; list-style: none; }
+.nav-links a {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 5px;
+  color: var(--muted); text-decoration: none; text-transform: uppercase;
+  transition: color .3s; position: relative; padding-bottom: 4px;
+}
+.nav-links a::after {
+  content: ''; position: absolute; bottom: 0; left: 0;
+  width: 0; height: 1px; background: var(--gold); transition: width .3s;
+}
+.nav-links a:hover, .nav-links a.active { color: var(--gold); }
+.nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+.nav-btn {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 3px;
+  text-transform: uppercase; background: transparent; color: var(--gold);
+  border: 1px solid rgba(201,169,110,.5); padding: 10px 22px; transition: all .3s;
+}
+.nav-btn:hover { background: var(--gold); color: var(--bg); }
+
+/* ═══════════════════════════════════════════════
+   PAGE 1: HERO — THE AWAKENING
+   Change: Two-column layout. Left = text, Right = 
+   floating RASHI-BOT + live data orbs.
+   WHY: Mirrors the Affirm site's two-panel approach.
+   Left tells who you are, right SHOWS it visually.
+═══════════════════════════════════════════════ */
+.hero {
+  height: 100vh;
+  display: grid; grid-template-columns: 1fr 1fr;
+  align-items: center; gap: 40px;
+  padding: 100px 64px 60px;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(201,169,110,.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201,169,110,.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+.hero-left { position: relative; z-index: 2; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 4px;
+  color: var(--green); text-transform: uppercase; margin-bottom: 32px;
+  opacity: 0; animation: fadeUp .8s .5s var(--ease-out-expo) both;
+}
+.hero-badge::before {
+  content: ''; width: 6px; height: 6px; background: var(--green);
+  border-radius: 50%; box-shadow: 0 0 10px var(--green);
+  animation: blink 1.5s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px);} to{opacity:1;transform:none;} }
+
+.hero h1 {
+  font-family: var(--ff-d);
+  font-size: clamp(64px, 7.5vw, 116px);
+  font-weight: 300; line-height: .88;
+  opacity: 0; animation: fadeUp 1s .7s var(--ease-out-expo) both;
+}
+.h1a { display: block; color: var(--text); }
+.h1b { display: block; font-style: italic; color: var(--gold-l); }
+.hero-sub {
+  font-family: var(--ff-m); font-size: 9px; letter-spacing: 4px;
+  color: var(--muted); margin-top: 22px; height: 18px;
+  opacity: 0; animation: fadeUp .8s 1.1s var(--ease-out-expo) both;
+}
+#typed { color: var(--gold); }
+.tcursor {
+  display: inline-block; width: 2px; height: 12px;
+  background: var(--gold); margin-left: 2px;
+  animation: blink 1s infinite; vertical-align: middle;
+}
+.hero-desc {
+  font-size: 14px; line-height: 2; color: var(--muted); font-weight: 300;
+  max-width: 480px; margin-top: 28px;
+  opacity: 0; animation: fadeUp .8s 1.3s var(--ease-out-expo) both;
+}
+.hero-desc em { color: var(--gold); font-style: normal; }
+.hero-btns {
+  display: flex; gap: 12px; margin-top: 40px;
+  opacity: 0; animation: fadeUp .8s 1.5s var(--ease-out-expo) both;
+}
+.btn-p {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 3px;
+  text-transform: uppercase; background: var(--gold); color: var(--bg);
+  border: none; padding: 14px 32px; transition: all .3s; position: relative; overflow: hidden;
+}
+.btn-p::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(255,255,255,.15); transform: translateX(-100%); transition: transform .4s;
+}
+.btn-p:hover::after { transform: translateX(0); }
+.btn-p:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(201,169,110,.3); }
+.btn-s {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 3px;
+  text-transform: uppercase; background: transparent; color: var(--muted);
+  border: 1px solid rgba(201,169,110,.2); padding: 14px 32px; transition: all .3s;
+}
+.btn-s:hover { border-color: var(--gold); color: var(--gold-l); }
+
+.hero-stats {
+  display: flex; gap: 48px; margin-top: 52px;
+  padding-top: 28px; border-top: 1px solid var(--border);
+  opacity: 0; animation: fadeUp .8s 1.7s var(--ease-out-expo) both;
+}
+.hs-n { font-family: var(--ff-d); font-size: 46px; font-weight: 300; color: var(--gold-l); line-height: 1; }
+.hs-l { font-family: var(--ff-m); font-size: 7px; letter-spacing: 3px; color: var(--muted); margin-top: 6px; text-transform: uppercase; }
+
+/* ── HERO RIGHT: RASHI-BOT + Data Universe ── */
+.hero-right {
+  position: relative; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  height: 560px;
+  opacity: 0; animation: fadeUp 1s 1.8s var(--ease-out-expo) both;
+}
+.robot-stage { position: relative; width: 400px; height: 520px; }
+
+/* Floating speech bubble */
+.hero-bubble {
+  position: absolute; top: 0; left: 0; right: 0;
+  background: rgba(4,2,10,.92);
+  border: 1px solid rgba(201,169,110,.25);
+  border-radius: 12px 12px 12px 4px;
+  padding: 18px 22px; backdrop-filter: blur(12px);
+  font-family: var(--ff-m); font-size: 10px; line-height: 1.8;
+  color: var(--green); min-height: 80px;
+  box-shadow: 0 0 40px rgba(57,255,133,.05);
+}
+.bubble-tag { font-size: 8px; color: var(--muted); letter-spacing: 2px; margin-bottom: 6px; }
+.bubble-cursor {
+  display: inline-block; width: 7px; height: 12px;
+  background: var(--green); margin-left: 2px;
+  animation: blink .8s infinite; vertical-align: middle;
+}
+.hero-bubble::after {
+  content: ''; position: absolute; bottom: -9px; left: 20px;
+  width: 0; height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 9px solid rgba(201,169,110,.25);
+}
+
+/* Data orbs floating around robot */
+.data-orb {
+  position: absolute;
+  background: rgba(4,2,10,.85);
+  border: 1px solid rgba(201,169,110,.2);
+  border-radius: 10px; padding: 10px 14px;
+  backdrop-filter: blur(8px);
+  animation: orbFloat var(--d,3s) var(--dl,0s) ease-in-out infinite;
+}
+@keyframes orbFloat {
+  0%,100% { transform: translateY(0) rotate(var(--r,0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--r,0deg)); }
+}
+.orb-v { font-family: var(--ff-d); font-size: 24px; font-weight: 300; color: var(--gold-l); line-height: 1; }
+.orb-l { font-family: var(--ff-m); font-size: 7px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-top: 3px; }
+
+/* Main robot SVG */
+.robot-wrap {
+  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  filter: drop-shadow(0 20px 60px rgba(57,255,133,.12));
+  animation: robotFloat 4s ease-in-out infinite;
+}
+@keyframes robotFloat {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-14px); }
+}
+.robot-click-hint {
+  position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%);
+  font-family: var(--ff-m); font-size: 7px; letter-spacing: 3px;
+  color: rgba(201,169,110,.35); text-transform: uppercase; white-space: nowrap;
+  animation: blink 2s infinite;
+}
+
+/* Scroll hint */
+.scroll-hint {
+  position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+  font-family: var(--ff-m); font-size: 7px; letter-spacing: 4px;
+  color: var(--muted); text-transform: uppercase;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  opacity: 0; animation: fadeUp .8s 2.2s ease both;
+}
+.scroll-line {
+  width: 1px; height: 48px;
+  background: linear-gradient(to bottom, var(--gold), transparent);
+  animation: scanPulse 2s infinite;
+}
+@keyframes scanPulse { 0%,100%{opacity:.3;} 50%{opacity:1;} }
+
+/* Scene label (bottom right) */
+#sceneLabel {
+  position: fixed; bottom: 28px; right: 44px; z-index: 50;
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 3px;
+  color: rgba(201,169,110,.35); text-transform: uppercase;
+  transition: opacity .4s;
+}
+
+/* ── TICKER ── */
+.ticker { background: var(--gold); padding: 10px 0; overflow: hidden; }
+.ticker-track { display: flex; animation: tick 30s linear infinite; width: max-content; }
+.tk {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 4px;
+  color: var(--bg); text-transform: uppercase; padding: 0 32px; white-space: nowrap;
+}
+@keyframes tick { from{transform:translateX(0);} to{transform:translateX(-50%);} }
+
+/* ═══════════════════════════════════════════════
+   PAGE 2: ABOUT — THE ORIGIN STORY
+   Change: Reframed as 3 chapters with scroll-reveals,
+   vertical timeline line, chapter numbers.
+   WHY: Transforms resume into narrative journey.
+   Each paragraph = a beat in the story.
+═══════════════════════════════════════════════ */
+.about {
+  padding: 0;
+  background: rgba(4,2,10,.65); backdrop-filter: blur(24px);
+}
+/* Chapter header */
+.chapter-header {
+  padding: 100px 80px 60px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; gap: 32px;
+}
+.chapter-num {
+  font-family: var(--ff-d); font-size: 120px; font-weight: 300;
+  color: rgba(201,169,110,.06); line-height: 1; flex-shrink: 0;
+  user-select: none;
+}
+.chapter-meta { flex: 1; }
+.chapter-label {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 5px;
+  color: var(--gold); text-transform: uppercase; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px;
+}
+.chapter-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.chapter-title {
+  font-family: var(--ff-d); font-size: clamp(42px,4.5vw,72px);
+  font-weight: 300; line-height: .94;
+}
+.chapter-title em { font-style: italic; color: var(--gold-l); }
+
+/* Timeline — the spine of the story */
+.about-timeline {
+  display: grid; grid-template-columns: 64px 1fr;
+  gap: 0; position: relative;
+}
+.timeline-spine {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 40px 0; position: sticky; top: 0; height: 100vh;
+  justify-content: center; gap: 0;
+  border-right: 1px solid var(--border);
+}
+.timeline-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1px solid rgba(201,169,110,.3); background: var(--bg);
+  transition: all .4s; position: relative;
+}
+.timeline-dot.active { background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+.timeline-connector { flex: 1; width: 1px; background: var(--border); max-height: 80px; }
+
+/* Story beats */
+.story-body { padding: 0 80px; }
+.story-beat {
+  padding: 60px 0; border-bottom: 1px solid var(--border);
+  opacity: 0; transform: translateX(20px);
+  transition: opacity .8s var(--ease-out-expo), transform .8s var(--ease-out-expo);
+}
+.story-beat.visible { opacity: 1; transform: none; }
+.beat-eyebrow {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 4px;
+  color: var(--gold); text-transform: uppercase; margin-bottom: 16px;
+}
+.beat-text {
+  font-size: 15px; line-height: 2.1; color: var(--muted); font-weight: 300;
+  max-width: 680px;
+}
+.beat-text strong { color: var(--text); font-weight: 400; }
+.beat-text .hl { color: var(--gold); }
+
+/* About stats — condensed into one row */
+.about-stats-row {
+  padding: 48px 80px; display: flex; gap: 1px;
+  background: var(--border); border-bottom: 1px solid var(--border);
+}
+.asr-cell {
+  flex: 1; background: rgba(4,2,10,.9); padding: 32px 28px;
+  transition: background .3s;
+}
+.asr-cell:hover { background: rgba(201,169,110,.04); }
+.asr-n {
+  font-family: var(--ff-d); font-size: 52px; font-weight: 300;
+  color: var(--gold-l); line-height: 1;
+}
+.asr-l {
+  font-family: var(--ff-m); font-size: 7px; letter-spacing: 3px;
+  color: var(--muted); margin-top: 8px; text-transform: uppercase;
+}
+.about-quote {
+  padding: 48px 80px; border-bottom: 1px solid var(--border);
+  display: flex; gap: 24px; align-items: flex-start;
+}
+.quote-bar { width: 2px; background: var(--gold); flex-shrink: 0; margin-top: 4px; }
+.quote-text {
+  font-family: var(--ff-d); font-size: clamp(20px,2vw,28px);
+  font-style: italic; color: var(--gold-l); line-height: 1.6; font-weight: 300;
+}
+
+/* ═══════════════════════════════════════════════
+   PAGE 3: PROJECTS — THE MISSIONS
+   Change: Added mission status bar, active indicator,
+   chapter-style numbering, briefing animation,
+   performance fix (canvas only runs when open).
+   WHY: Makes each project feel like an event,
+   not just a list item.
+═══════════════════════════════════════════════ */
+.projects-section {
+  background: rgba(4,2,10,.7); backdrop-filter: blur(24px);
+  padding: 0 0 80px;
+}
+.proj-header { padding: 80px 80px 48px; }
+.proj-hint {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 3px;
+  color: var(--muted); margin-top: 12px;
+  display: flex; align-items: center; gap: 16px;
+}
+.proj-hint::before { content: ''; display: block; width: 20px; height: 1px; background: var(--gold); }
+
+.proj-list { border-top: 1px solid var(--border); }
+.proj-row { border-bottom: 1px solid var(--border); overflow: hidden; position: relative; }
+
+/* Active mission indicator — left edge accent */
+.proj-row::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--accent-color, var(--gold));
+  transform: scaleY(0); transform-origin: top;
+  transition: transform .5s var(--ease-out-expo);
+}
+.proj-row.open::before { transform: scaleY(1); }
+
+.prh {
+  display: grid; grid-template-columns: 72px 1fr auto 48px;
+  align-items: center; gap: 16px; padding: 28px 80px;
+  position: relative; transition: background .3s;
+}
+/* Sweep background on hover/open */
+.prh::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to right, rgba(201,169,110,.04), transparent);
+  opacity: 0; transition: opacity .4s;
+}
+.proj-row:hover .prh::after, .proj-row.open .prh::after { opacity: 1; }
+
+.prh-num {
+  font-family: var(--ff-m); font-size: 10px; color: var(--muted);
+  letter-spacing: 2px; transition: color .3s;
+}
+.proj-row.open .prh-num { color: var(--accent-color, var(--gold)); }
+
+.prh-title {
+  font-family: var(--ff-d); font-size: clamp(18px,2vw,30px);
+  font-weight: 300; transition: color .3s;
+}
+.proj-row:hover .prh-title, .proj-row.open .prh-title { color: var(--gold-l); }
+
+.prh-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.prh-tag {
+  font-family: var(--ff-m); font-size: 7px; letter-spacing: 2px;
+  color: var(--muted); border: 1px solid var(--border); padding: 4px 10px;
+  text-transform: uppercase; transition: all .3s;
+}
+.proj-row:hover .prh-tag { border-color: rgba(201,169,110,.25); }
+
+.prh-plus {
+  font-size: 18px; color: var(--gold); transition: transform .4s var(--ease-out-expo);
+  text-align: center; line-height: 1; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(201,169,110,.2); border-radius: 50%;
+}
+.proj-row.open .prh-plus { transform: rotate(45deg); background: rgba(201,169,110,.08); }
+
+/* Drawer — smooth accordion */
+.drawer {
+  max-height: 0; overflow: hidden;
+  transition: max-height 1s var(--ease-in-out-quart);
+}
+.proj-row.open .drawer { max-height: 3200px; }
+.drawer-inner { border-top: 1px solid rgba(201,169,110,.08); }
+
+/* Mission briefing banner */
+.mission-brief {
+  padding: 16px 80px;
+  background: linear-gradient(to right, rgba(var(--accent-rgb,201,169,110),.06), transparent);
+  border-bottom: 1px solid rgba(var(--accent-rgb,201,169,110),.1);
+  font-family: var(--ff-m); font-size: 9px; letter-spacing: 2px;
+  color: var(--muted); display: flex; align-items: center; gap: 16px;
+}
+.brief-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-color, var(--gold));
+  box-shadow: 0 0 8px var(--accent-color, var(--gold));
+  animation: blink 1.5s infinite;
+}
+
+/* Cinema: left canvas + right content */
+.proj-cinema {
+  display: grid; grid-template-columns: 1fr 1fr; min-height: 480px;
+}
+.proj-scene { position: relative; overflow: hidden; background: var(--bg); }
+.proj-scene-canvas { width: 100%; height: 100%; display: block; min-height: 480px; }
+.proj-scene-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to right, transparent 50%, rgba(4,2,10,.95) 100%);
+  pointer-events: none;
+}
+
+/* Floating orb inside scene */
+.proj-orb {
+  position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%);
+  width: 110px; height: 110px; border-radius: 50%;
+  background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.18);
+  display: flex; align-items: center; justify-content: center;
+  animation: orbFloat 3.5s ease-in-out infinite;
+  backdrop-filter: blur(6px);
+}
+.proj-orb-icon { font-size: 36px; }
+.proj-orb-name {
+  position: absolute; top: calc(42% + 38px); left: 50%;
+  transform: translateX(-50%); margin-top: 16px;
+  font-family: var(--ff-d); font-size: 16px;
+  color: #fff; white-space: nowrap; text-align: center;
+  font-weight: 300;
+}
+.proj-orb-dots {
+  position: absolute; top: calc(42% + 66px); left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 6px; margin-top: 8px;
+}
+.pod {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,.25);
+}
+.pod.on { background: rgba(255,255,255,.9); }
+
+/* Info card on scene */
+.proj-info-card {
+  position: absolute; bottom: 28%; left: 50%; transform: translateX(-44%);
+  background: rgba(4,2,10,.78); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px; padding: 14px 18px; backdrop-filter: blur(10px);
+  font-family: var(--ff-m); font-size: 9px; color: rgba(255,255,255,.6);
+  line-height: 1.75; max-width: 200px;
+}
+
+/* Right content panel */
+.proj-content {
+  padding: 48px 60px 48px 44px;
+  display: flex; flex-direction: column;
+  background: rgba(4,2,10,.35);
+}
+.pc-eyebrow {
+  font-family: var(--ff-m); font-size: 7px; letter-spacing: 4px;
+  color: var(--accent-color, var(--gold)); text-transform: uppercase; margin-bottom: 14px;
+}
+.pc-title {
+  font-family: var(--ff-d); font-size: clamp(26px,2.5vw,38px);
+  font-weight: 300; color: var(--gold-l); line-height: 1.1; margin-bottom: 18px;
+}
+.pc-desc {
+  font-size: 13px; line-height: 1.95; color: var(--muted);
+  font-weight: 300; margin-bottom: 28px;
+}
+.pc-desc strong { color: var(--text); font-weight: 400; }
+
+/* Metric grid */
+.pc-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
+.pc-metric {
+  background: rgba(201,169,110,.03); border: 1px solid var(--border);
+  padding: 16px 14px; position: relative; overflow: hidden;
+}
+.pc-metric::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(to right, var(--accent-color,var(--gold)), transparent);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .8s .2s var(--ease-out-expo);
+}
+.proj-row.open .pc-metric::after { transform: scaleX(1); }
+.pm-v { font-family: var(--ff-d); font-size: 32px; font-weight: 300; color: var(--gold-l); line-height: 1; }
+.pm-l { font-family: var(--ff-m); font-size: 7px; letter-spacing: 2px; color: var(--muted); margin-top: 4px; text-transform: uppercase; }
+
+/* Performance bars */
+.pc-bars { margin-bottom: 22px; }
+.bar-title { font-family: var(--ff-m); font-size: 7px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.bar-lbl { font-size: 10px; color: var(--muted); width: 120px; flex-shrink: 0; }
+.bar-track { flex: 1; height: 2px; background: rgba(255,255,255,.05); overflow: hidden; }
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--accent-color,var(--gold)), var(--rose));
+  width: 0; transition: width 1.3s .4s var(--ease-out-expo);
+}
+.proj-row.open .bar-fill { width: var(--w, 80%); }
+.bar-val { font-family: var(--ff-m); font-size: 9px; color: var(--accent-color,var(--gold)); width: 32px; text-align: right; }
+
+/* Approach steps */
+.pc-steps { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.pcs { display: flex; gap: 12px; }
+.pcs-n { font-family: var(--ff-m); font-size: 9px; color: var(--accent-color,var(--gold)); min-width: 22px; margin-top: 2px; }
+.pcs-title { font-size: 12px; font-weight: 400; color: var(--text); margin-bottom: 3px; }
+.pcs-desc { font-size: 11px; color: var(--muted); line-height: 1.7; font-weight: 300; }
+
+.pc-links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 16px; }
+.pl {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 2px;
+  text-transform: uppercase; padding: 10px 20px; border: 1px solid; text-decoration: none;
+  transition: all .3s; display: inline-block;
+}
+.pl.pp { border-color: var(--accent-color,var(--gold)); color: var(--accent-color,var(--gold)); }
+.pl.pp:hover { background: var(--accent-color,var(--gold)); color: var(--bg); }
+.pl.pg { border-color: var(--border); color: var(--muted); }
+.pl.pg:hover { border-color: var(--muted); color: var(--text); }
+
+.skills{padding:0;background:rgba(4,2,10,.82);backdrop-filter:blur(28px);}
+.skills-header{padding:80px 80px 48px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px;}
+.skills-hint{font-family:var(--ff-m);font-size:8px;letter-spacing:4px;color:var(--muted);display:flex;align-items:center;gap:10px;}
+.hint-key{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:5px;background:rgba(201,169,110,.08);border:1px solid rgba(201,169,110,.3);font-size:14px;color:var(--gold);box-shadow:0 3px 0 rgba(0,0,0,.5);animation:keyBounce 1.8s ease-in-out infinite;}
+@keyframes keyBounce{0%,100%{transform:translateY(0);box-shadow:0 3px 0 rgba(0,0,0,.5);}50%{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.5);}}
+.kb-stage{padding:40px 60px 60px;display:grid;grid-template-columns:1fr 320px;gap:40px;align-items:start;}
+.kb-scene{perspective:1400px;perspective-origin:50% 28%;}
+.kb-body{transform:rotateX(20deg) rotateY(-1deg);transform-style:preserve-3d;display:inline-block;width:100%;}
+.kb-chassis{background:linear-gradient(145deg,#1c1628,#100c1e);border:1px solid rgba(201,169,110,.15);border-radius:16px;padding:18px 18px 28px;box-shadow:0 24px 64px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.04),inset 0 1px 0 rgba(255,255,255,.06);position:relative;}
+.kb-chassis::after{content:'RASHMIKA · SRIVASTAVA · DATA SCIENTIST · 2025';position:absolute;bottom:9px;left:50%;transform:translateX(-50%);font-family:var(--ff-m);font-size:6px;letter-spacing:3px;color:rgba(201,169,110,.18);white-space:nowrap;}
+.kb-row{display:flex;gap:5px;margin-bottom:5px;align-items:flex-end;}
+.key{position:relative;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;height:44px;padding:4px 6px;border-radius:6px;background:linear-gradient(180deg,#1e1830 0%,#15102a 100%);border:1px solid rgba(201,169,110,.12);box-shadow:0 6px 0 #08050f,0 8px 16px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);cursor:none;flex-shrink:0;user-select:none;transition:transform .07s cubic-bezier(.4,0,.6,1),box-shadow .07s cubic-bezier(.4,0,.6,1),background .15s,border-color .15s;}
+.key-label{font-family:var(--ff-m);font-size:7.5px;color:rgba(255,255,255,.35);letter-spacing:1px;line-height:1;transition:color .15s;text-align:center;pointer-events:none;}
+.key-skill{font-family:var(--ff-m);font-size:6px;color:rgba(255,255,255,.18);margin-top:2px;text-align:center;line-height:1.2;pointer-events:none;transition:color .15s;max-width:38px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.key:hover,.key.active{transform:translateY(5px);box-shadow:0 1px 0 #08050f,0 2px 8px rgba(0,0,0,.4);background:linear-gradient(180deg,var(--kc,#2a2040) 0%,#0d0a20 100%);border-color:var(--kc,rgba(201,169,110,.5));}
+.key:hover .key-label,.key.active .key-label{color:var(--kc,var(--gold));}
+.key:hover .key-skill,.key.active .key-skill{color:rgba(255,255,255,.75);}
+.key.active::after{content:'';position:absolute;inset:-2px;border-radius:8px;box-shadow:0 0 16px var(--kc,var(--gold)),0 0 36px rgba(201,169,110,.1);pointer-events:none;}
+.key.cat-ml{--kc:#39ff85;}.key.cat-lang{--kc:#38cfff;}.key.cat-data{--kc:#d4849a;}.key.cat-cloud{--kc:#c9a96e;}.key.cat-spec{--kc:#9d7de8;}
+.key.w15{min-width:64px;}.key.w2{min-width:92px;}.key.w25{min-width:114px;}.key.wsp{min-width:260px;}.key.wfn{min-width:36px;height:36px;}
+.kb-info{position:sticky;top:100px;background:rgba(4,2,10,.92);border:1px solid rgba(201,169,110,.15);border-radius:12px;padding:28px;backdrop-filter:blur(20px);min-height:300px;transition:border-color .3s;}
+.kb-info.lit{border-color:var(--info-c,rgba(201,169,110,.5));}
+.kb-idle{display:flex;flex-direction:column;align-items:center;justify-content:center;height:260px;gap:16px;text-align:center;}
+.kb-idle.off{display:none;}
+.idle-row{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;}
+.ik{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:4px;background:rgba(201,169,110,.07);border:1px solid rgba(201,169,110,.2);font-family:var(--ff-m);font-size:8px;color:rgba(201,169,110,.45);box-shadow:0 2px 0 rgba(0,0,0,.5);}
+.idle-hint{font-family:var(--ff-m);font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
+.kb-detail{display:none;}.kb-detail.on{display:block;}
+.det-badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--ff-m);font-size:7px;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;padding:5px 12px;border-radius:20px;border:1px solid currentColor;opacity:.8;}
+.det-name{font-family:var(--ff-d);font-size:28px;font-weight:300;line-height:1.1;margin-bottom:12px;}
+.det-desc{font-size:12px;line-height:1.8;color:var(--muted);font-weight:300;margin-bottom:18px;}
+.det-bar-hd{display:flex;justify-content:space-between;font-family:var(--ff-m);font-size:7px;color:var(--muted);letter-spacing:2px;margin-bottom:6px;}
+.det-bar-track{height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
+.det-bar-fill{height:100%;border-radius:2px;background:var(--info-c,var(--gold));transition:width .7s cubic-bezier(.16,1,.3,1);}
+.det-key{margin-top:14px;display:flex;align-items:center;gap:8px;font-family:var(--ff-m);font-size:7px;color:rgba(201,169,110,.3);letter-spacing:2px;}
+.det-keychip{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 6px;border-radius:4px;background:rgba(201,169,110,.08);border:1px solid rgba(201,169,110,.2);font-family:var(--ff-m);font-size:10px;color:var(--gold);box-shadow:0 2px 0 rgba(0,0,0,.5);}
+.kb-legend{display:flex;gap:24px;padding:20px 60px 40px;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:8px;font-family:var(--ff-m);font-size:7px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+.leg-dot{width:8px;height:8px;border-radius:2px;background:var(--lc,var(--gold));box-shadow:0 0 6px var(--lc,var(--gold));}
+.mob-menu-btn{display:none;flex-direction:column;justify-content:center;gap:5px;background:none;border:none;cursor:pointer;padding:8px;z-index:1001;}
+.mob-menu-btn span{display:block;width:22px;height:1.5px;background:var(--gold);border-radius:2px;transition:transform .3s,opacity .3s;}
+.mob-menu-btn.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg);}
+.mob-menu-btn.open span:nth-child(2){opacity:0;}
+.mob-menu-btn.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg);}
+.mob-nav-overlay{display:none;position:fixed;inset:0;top:56px;background:rgba(4,2,10,.97);backdrop-filter:blur(20px);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:36px;}
+.mob-nav-overlay.open{display:flex;}
+.mob-nav-overlay a{font-family:var(--ff-m);font-size:11px;letter-spacing:6px;color:var(--muted);text-decoration:none;text-transform:uppercase;transition:color .2s;}
+.mob-nav-overlay a:hover{color:var(--gold);}
+@media(max-width:960px){
+  nav{padding:16px 20px;} .nav-links{display:none;} .nav-btn{display:none;} .mob-menu-btn{display:flex;}
+  .hero{grid-template-columns:1fr;padding:90px 24px 50px;gap:32px;} .hero-right{display:none;}
+  .hero-title{font-size:clamp(38px,11vw,64px);} .hero-desc{font-size:13px;}
+  .hero-cta{flex-direction:column;gap:12px;} .btn-p,.btn-s{width:100%;text-align:center;padding:14px 20px;}
+  .hero-stats{flex-wrap:wrap;gap:16px;}
+  .chapter-header{padding:56px 24px 36px;} .chapter-title{font-size:clamp(32px,10vw,56px);} .chapter-num{font-size:64px;}
+  .about-timeline{grid-template-columns:1fr;} .timeline-spine{display:none;}
+  .story-body{padding:0 24px 40px;} .about-stats-row{flex-wrap:wrap;padding:24px;gap:16px;} .about-quote{padding:24px;margin:0 20px 20px;}
+  .skills-header{padding:56px 24px 36px;flex-direction:column;align-items:flex-start;gap:14px;}
+  .kb-stage{grid-template-columns:1fr;padding:16px 0 32px;gap:24px;}
+  .kb-scene{overflow-x:auto;padding:0 12px;} .kb-body{transform:rotateX(6deg);display:inline-block;width:auto;min-width:560px;}
+  .kb-chassis{padding:12px 12px 22px;} .kb-row{gap:3px;margin-bottom:3px;}
+  .key{min-width:32px !important;height:32px !important;padding:2px 3px;}
+  .key.wsp{min-width:160px !important;} .key.wfn{min-width:26px !important;height:26px !important;}
+  .key.w2{min-width:68px !important;} .key.w25{min-width:84px !important;} .key.w15{min-width:50px !important;}
+  .key-label{font-size:5.5px;} .key-skill{font-size:4.5px;}
+  .kb-info{position:static;margin:0 12px;} .kb-idle{height:160px;} .det-name{font-size:22px;}
+  .kb-legend{padding:12px 24px 24px;gap:14px;}
+  .proj-header,.skills-header{padding:56px 24px 36px;}
+  .prh{padding:18px 20px;grid-template-columns:44px 1fr 32px;gap:12px;} .prh-tags{display:none;}
+  .mission-brief{padding:10px 20px;flex-wrap:wrap;gap:8px;}
+  .proj-cinema{grid-template-columns:1fr;} .proj-scene-wrap{height:180px;}
+  .proj-content{padding:24px 20px;} .pc-title{font-size:22px;}
+  .pc-metrics{grid-template-columns:repeat(2,1fr);}
+  .contact{padding:60px 24px 80px;} .contact-title{font-size:clamp(32px,10vw,64px);}
+  .contact-cards{flex-direction:column;width:100%;max-width:340px;margin:0 auto 32px;background:none;gap:2px;}
+  .cc{padding:14px 20px;width:100%;border:1px solid rgba(201,169,110,.1);border-radius:8px;}
+  .contact-form-wrap{max-width:100%;} .form-input,.form-textarea{font-size:16px;}
+  footer{padding:20px 24px;flex-direction:column;gap:8px;text-align:center;}
+}
+@media(max-width:480px){
+  .hero-title{font-size:clamp(30px,13vw,48px);} .chapter-title{font-size:clamp(26px,12vw,40px);}
+  .kb-body{min-width:500px;} .contact-cards{max-width:100%;}
+}
+
+/* ═══════════════════════════════════════════════
+   PAGE 5: CONTACT — THE PORTAL
+   Change: Added actual contact form with validation
+   states, portal glow animation, micro-feedback.
+   WHY: Portal should feel like crossing a threshold.
+═══════════════════════════════════════════════ */
+.contact {
+  padding: 100px 80px 120px;
+  text-align: center; position: relative; overflow: hidden;
+  background: rgba(4,2,10,.85); backdrop-filter: blur(24px);
+}
+/* Radial portal glow */
+.contact::before {
+  content: ''; position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(ellipse, rgba(201,169,110,.06) 0%, transparent 70%);
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  animation: portalPulse 4s ease-in-out infinite; pointer-events: none;
+}
+@keyframes portalPulse {
+  0%,100% { transform: translate(-50%,-50%) scale(1); opacity:.6; }
+  50% { transform: translate(-50%,-50%) scale(1.15); opacity:1; }
+}
+/* Rotating ring */
+.portal-ring {
+  position: absolute; top: 50%; left: 50%;
+  width: 700px; height: 700px; border-radius: 50%;
+  border: 1px solid rgba(201,169,110,.04);
+  transform: translate(-50%,-50%);
+  animation: portalSpin 20s linear infinite; pointer-events: none;
+}
+.portal-ring:nth-child(2) {
+  width: 900px; height: 900px;
+  animation-duration: 30s; animation-direction: reverse;
+  border-color: rgba(201,169,110,.025);
+}
+
+.contact-kicker {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 6px;
+  color: var(--gold); text-transform: uppercase; margin-bottom: 28px;
+  position: relative; z-index: 2;
+}
+@keyframes portalSpin { from{transform:translate(-50%,-50%) rotate(0deg);} to{transform:translate(-50%,-50%) rotate(360deg);} }
+
+.contact-title {
+  font-family: var(--ff-d); font-size: clamp(54px,9vw,110px);
+  font-weight: 300; line-height: .9; margin-bottom: 48px;
+  position: relative; z-index: 2;
+}
+.contact-title em { font-style: italic; color: var(--gold-l); }
+
+/* Quick contact cards */
+.contact-cards {
+  display: inline-flex; gap: 1px; background: var(--border);
+  margin-bottom: 48px; flex-wrap: wrap; justify-content: center;
+  position: relative; z-index: 2;
+}
+.cc {
+  background: rgba(4,2,10,.92); padding: 20px 36px;
+  text-decoration: none !important; color: var(--muted) !important;
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 3px;
+  text-transform: uppercase; transition: background .3s, color .3s;
+  display: flex; align-items: center; gap: 10px;
+  -webkit-tap-highlight-color: transparent; outline: none;
+}
+.cc:hover { color: var(--gold-l) !important; background: rgba(201,169,110,.08); }
+.cc:focus, .cc:visited { color: var(--muted) !important; outline: none; }
+.cc span { color: var(--gold); opacity: .75; font-size: 11px; }
+
+/* Contact form */
+.contact-form-wrap {
+  max-width: 560px; margin: 0 auto 40px;
+  position: relative; z-index: 2; text-align: left;
+}
+.form-row { margin-bottom: 16px; }
+.form-label {
+  display: block; font-family: var(--ff-m); font-size: 7px;
+  letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px;
+}
+.form-input, .form-textarea {
+  width: 100%; background: rgba(255,255,255,.03);
+  border: 1px solid rgba(201,169,110,.15); padding: 14px 18px;
+  font-family: var(--ff-b); font-size: 13px; color: var(--text);
+  outline: none; transition: border-color .3s, box-shadow .3s;
+  resize: none;
+}
+.form-input:focus, .form-textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,169,110,.08);
+}
+.form-input::placeholder, .form-textarea::placeholder { color: var(--muted); opacity: .5; }
+.form-textarea { height: 120px; }
+.form-submit {
+  width: 100%; font-family: var(--ff-m); font-size: 9px; letter-spacing: 4px;
+  text-transform: uppercase; background: var(--gold); color: var(--bg);
+  border: none; padding: 16px; transition: all .3s; position: relative; overflow: hidden;
+  margin-top: 4px;
+}
+.form-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(201,169,110,.3); }
+.form-submit.sent {
+  background: var(--green); color: #000;
+  pointer-events: none;
+}
+.contact-note {
+  font-family: var(--ff-m); font-size: 8px; letter-spacing: 3px;
+  color: var(--muted); text-transform: uppercase;
+  position: relative; z-index: 2;
+}
+
+footer {
+  border-top: 1px solid var(--border); padding: 22px 80px;
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(4,2,10,.98);
+}
+.fl { font-family: var(--ff-m); font-size: 8px; letter-spacing: 2px; color: var(--muted); }
+.fr { font-family: var(--ff-d); font-size: 16px; font-style: italic; color: var(--gold); }
+
+/* Reveal utility */
+.reveal {
+  opacity: 0; transform: translateY(32px);
+  transition: opacity .9s var(--ease-out-expo), transform .9s var(--ease-out-expo);
+}
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 960px) {
+  nav { padding: 16px 24px; }
+  .nav-links { display: none; }
+  .hero { grid-template-columns: 1fr; padding: 100px 24px 60px; }
+  .hero-right { display: none; }
+  .chapter-header { padding: 60px 24px 40px; }
+  .chapter-num { font-size: 60px; }
+  .about-timeline { grid-template-columns: 1fr; }
+  .timeline-spine { display: none; }
+  .story-body { padding: 0 24px; }
+  .about-stats-row { flex-wrap: wrap; padding: 24px; }
+  .about-quote { padding: 24px; }
+  .proj-header, .skills-header { padding: 60px 24px 40px; }
+  .prh { padding: 20px 24px; grid-template-columns: 50px 1fr 36px; }
+  .prh-tags { display: none; }
+  .mission-brief { padding: 12px 24px; }
+  .proj-cinema { grid-template-columns: 1fr; }
+  .proj-content { padding: 28px 24px; }
+  .arsenal-grid { grid-template-columns: 1fr 1fr; }
+  .contact { padding: 80px 24px; }
+  footer { padding: 20px 24px; flex-direction: column; gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════
+     BOOT SEQUENCE — Page 1 intro
+     Appears for ~2.5s then fades.
+     Creates the "awakening" moment.
+══════════════════════════════════ -->
+<div id="boot">
+  <div class="boot-logo">Rashmika Srivastava</div>
+  <div class="boot-line"></div>
+  <div class="boot-text" id="bootText">Initializing...</div>
+  <div class="boot-bar"><div class="boot-fill"></div></div>
+</div>
+
+<!-- CURSOR -->
+<div id="cur"></div>
+<div id="cur-r"></div>
+
+<!-- SCROLL PROGRESS -->
+<div id="navProgress"></div>
+
+<!-- UNIVERSE CANVAS — fixed behind everything -->
+<div id="universe"><canvas id="universeCanvas"></canvas></div>
+<div id="universeOverlay"></div>
+<div id="sceneLabel">INITIALIZING</div>
+
+<!-- SCROLL BODY -->
+<div id="scrollBody">
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="nav-logo">Rashmika S.</div>
+  <ul class="nav-links">
+    <li><a href="#home"     data-section="home">Home</a></li>
+    <li><a href="#about"    data-section="about">Story</a></li>
+    <li><a href="#skills"   data-section="skills">Arsenal</a></li>
+    <li><a href="#projects" data-section="projects">Missions</a></li>
+    <li><a href="#contact"  data-section="contact">Contact</a></li>
+  </ul>
+  <button class="mob-menu-btn" id="mobMenuBtn" aria-label="Menu" onclick="toggleMobMenu()"><span></span><span></span><span></span></button>
+  <button class="nav-btn" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Hire Me</button>
+</nav>
+<div class="mob-nav-overlay" id="mobOverlay">
+  <a href="#home"     onclick="closeMobMenu()">Home</a>
+  <a href="#about"    onclick="closeMobMenu()">Story</a>
+  <a href="#skills"   onclick="closeMobMenu()">Arsenal</a>
+  <a href="#projects" onclick="closeMobMenu()">Missions</a>
+  <a href="#contact"  onclick="closeMobMenu()">Contact</a>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE 1 — THE AWAKENING (Hero)
+══════════════════════════════════════════════ -->
+<section class="hero" id="home">
+  <!-- LEFT: Text -->
+  <div class="hero-left">
+    <div class="hero-badge">Available · May 2025 · OPT Eligible</div>
+    <h1>
+      <span class="h1a">Rashmika</span>
+      <span class="h1b">Srivastava</span>
+    </h1>
+    <div class="hero-sub"><span id="typed"></span><span class="tcursor"></span></div>
+    <p class="hero-desc">
+      I build ML models that <em>mean something</em> — predicting mental health patterns,
+      catching fraud, classifying disease with <em>89% accuracy</em>.
+      Scroll through my universe.
+    </p>
+    <div class="hero-btns">
+      <button class="btn-p" onclick="document.getElementById('skills').scrollIntoView({behavior:'smooth'})">Explore Arsenal</button>
+      <button class="btn-s" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Let's Connect</button>
+    </div>
+    <div class="hero-stats">
+      <div><div class="hs-n" id="hn1">0</div><div class="hs-l">Accuracy</div></div>
+      <div><div class="hs-n" id="hn2">0</div><div class="hs-l">F1-Score</div></div>
+      <div><div class="hs-n" id="hn3">0</div><div class="hs-l">Projects</div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: RASHI-BOT + Data Orbs (mirrors Affirm layout) -->
+  <div class="hero-right">
+    <div class="robot-stage">
+      <!-- Speech bubble above robot -->
+      <div class="hero-bubble">
+        <div class="bubble-tag">RASHI-BOT v2.0 ›</div>
+        <span id="heroSpeech"></span><span class="bubble-cursor"></span>
+      </div>
+
+      <!-- Floating data orbs -->
+      <div class="data-orb" style="bottom:300px;right:0;--d:3.5s;--dl:0s;--r:-4deg;">
+        <div class="orb-v">89%</div><div class="orb-l">Accuracy</div>
+      </div>
+      <div class="data-orb" style="bottom:220px;right:16px;--d:4.2s;--dl:-1.8s;--r:3deg;">
+        <div class="orb-v">94%</div><div class="orb-l">F1-Score</div>
+      </div>
+      <div class="data-orb" style="bottom:310px;left:4px;--d:3s;--dl:-0.9s;--r:2deg;">
+        <div class="orb-v">8+</div><div class="orb-l">Projects</div>
+      </div>
+
+      <!-- RASHI-BOT pixel robot -->
+      <div class="robot-wrap" id="mainRobot" onclick="robotTalk()">
+        <svg width="260" height="340" viewBox="0 0 260 340" style="overflow:visible;">
+          <defs>
+            <linearGradient id="rbody" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1a1428"/><stop offset="100%" stop-color="#0d0a18"/>
+            </linearGradient>
+            <linearGradient id="rscr" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#051208"/><stop offset="100%" stop-color="#020a04"/>
+            </linearGradient>
+            <filter id="gg"><feGaussianBlur stdDeviation="3" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="gb"><feGaussianBlur stdDeviation="2" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <!-- Shadow glow -->
+          <ellipse cx="130" cy="336" rx="64" ry="7" fill="rgba(57,255,133,.08)" filter="url(#gg)"/>
+          <!-- Legs (alternating walk) -->
+          <g style="animation:legWalk 2s ease-in-out infinite;transform-origin:92px 268px;">
+            <rect x="76" y="268" width="34" height="48" rx="8" fill="url(#rbody)" stroke="rgba(201,169,110,.2)" stroke-width="1"/>
+            <rect x="80" y="278" width="8" height="3" rx="1" fill="rgba(57,255,133,.5)" filter="url(#gg)"/>
+            <rect x="70" y="310" width="44" height="14" rx="7" fill="#141020" stroke="rgba(201,169,110,.25)" stroke-width="1"/>
+            <rect x="84" y="313" width="18" height="3" rx="1" fill="rgba(201,169,110,.3)"/>
+          </g>
+          <g style="animation:legWalk 2s 1s ease-in-out infinite;transform-origin:168px 268px;">
+            <rect x="150" y="268" width="34" height="48" rx="8" fill="url(#rbody)" stroke="rgba(201,169,110,.2)" stroke-width="1"/>
+            <rect x="154" y="278" width="8" height="3" rx="1" fill="rgba(57,255,133,.5)" filter="url(#gg)"/>
+            <rect x="146" y="310" width="44" height="14" rx="7" fill="#141020" stroke="rgba(201,169,110,.25)" stroke-width="1"/>
+            <rect x="160" y="313" width="18" height="3" rx="1" fill="rgba(201,169,110,.3)"/>
+          </g>
+          <!-- Body -->
+          <rect x="56" y="158" width="148" height="118" rx="16" fill="url(#rbody)" stroke="rgba(201,169,110,.3)" stroke-width="1.5"/>
+          <!-- Chest screen -->
+          <rect x="72" y="170" width="116" height="56" rx="8" fill="url(#rscr)" stroke="rgba(57,255,133,.35)" stroke-width="1"/>
+          <rect x="72" y="170" width="116" height="4" fill="rgba(57,255,133,.07)" style="animation:scanLine 2s linear infinite;"/>
+          <!-- Chest bars (data viz) -->
+          <rect x="80" y="182" width="8" height="28" rx="2" fill="rgba(57,255,133,.6)" filter="url(#gg)"/>
+          <rect x="92" y="192" width="8" height="18" rx="2" fill="rgba(57,255,133,.5)" filter="url(#gg)"/>
+          <rect x="104" y="178" width="8" height="32" rx="2" fill="rgba(57,255,133,.8)" filter="url(#gg)"/>
+          <rect x="116" y="186" width="8" height="24" rx="2" fill="rgba(57,255,133,.5)" filter="url(#gg)"/>
+          <rect x="128" y="175" width="8" height="35" rx="2" fill="rgba(57,255,133,.9)" filter="url(#gg)"/>
+          <rect x="140" y="188" width="8" height="22" rx="2" fill="rgba(57,255,133,.5)" filter="url(#gg)"/>
+          <rect x="152" y="182" width="8" height="28" rx="2" fill="rgba(57,255,133,.6)" filter="url(#gg)"/>
+          <text x="130" y="240" text-anchor="middle" font-family="Space Mono" font-size="6" fill="rgba(201,169,110,.4)" letter-spacing="3">RASHI-BOT</text>
+          <!-- Corner bolts -->
+          <circle cx="64" cy="176" r="3.5" fill="#1a1428" stroke="rgba(201,169,110,.4)" stroke-width="1"/>
+          <circle cx="196" cy="176" r="3.5" fill="#1a1428" stroke="rgba(201,169,110,.4)" stroke-width="1"/>
+          <circle cx="64" cy="248" r="3.5" fill="#1a1428" stroke="rgba(201,169,110,.4)" stroke-width="1"/>
+          <circle cx="196" cy="248" r="3.5" fill="#1a1428" stroke="rgba(201,169,110,.4)" stroke-width="1"/>
+          <!-- Arms -->
+          <rect x="20" y="165" width="40" height="18" rx="9" fill="url(#rbody)" stroke="rgba(201,169,110,.2)" stroke-width="1"/>
+          <rect x="14" y="178" width="34" height="48" rx="11" fill="url(#rbody)" stroke="rgba(201,169,110,.2)" stroke-width="1"/>
+          <rect x="8" y="222" width="40" height="26" rx="9" fill="#141020" stroke="rgba(57,255,133,.4)" stroke-width="1" filter="url(#gg)"/>
+          <text x="28" y="239" text-anchor="middle" font-family="Space Mono" font-size="6" fill="rgba(57,255,133,.9)" letter-spacing="1">DATA</text>
+          <rect x="200" y="165" width="40" height="18" rx="9" fill="url(#rbody)" stroke="rgba(201,169,110,.2)" stroke-width="1"/>
+          <rect x="212" y="178" width="34" height="48" rx="11" fill="url(#rbody)" stroke="rgba(201,169,110,.2)" stroke-width="1"/>
+          <rect x="212" y="222" width="40" height="26" rx="9" fill="#141020" stroke="rgba(56,207,255,.4)" stroke-width="1" filter="url(#gb)"/>
+          <text x="232" y="239" text-anchor="middle" font-family="Space Mono" font-size="6" fill="rgba(56,207,255,.9)" letter-spacing="1">CODE</text>
+          <!-- Neck -->
+          <rect x="108" y="136" width="44" height="26" rx="6" fill="#100c1c" stroke="rgba(201,169,110,.2)" stroke-width="1"/>
+          <!-- Head -->
+          <rect x="54" y="44" width="152" height="96" rx="18" fill="url(#rbody)" stroke="rgba(201,169,110,.35)" stroke-width="1.5"/>
+          <rect x="54" y="44" width="152" height="28" rx="18" fill="rgba(201,169,110,.05)"/>
+          <!-- Antenna -->
+          <line x1="130" y1="44" x2="130" y2="14" stroke="rgba(201,169,110,.4)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="130" cy="10" r="5" fill="#c9a96e" style="animation:antPulse 2s ease-in-out infinite;" filter="url(#gg)"/>
+          <circle cx="130" cy="10" r="9" fill="none" stroke="rgba(201,169,110,.2)" stroke-width="1" style="animation:antPulse 2s .5s ease-in-out infinite;"/>
+          <!-- Ear panels -->
+          <rect x="38" y="64" width="18" height="40" rx="7" fill="#0d0a18" stroke="rgba(201,169,110,.2)" stroke-width="1"/>
+          <rect x="42" y="72" width="5" height="3" rx="1" fill="rgba(57,255,133,.6)" filter="url(#gg)"/>
+          <rect x="42" y="79" width="5" height="3" rx="1" fill="rgba(57,255,133,.3)"/>
+          <rect x="42" y="86" width="5" height="3" rx="1" fill="rgba(57,255,133,.6)" filter="url(#gg)"/>
+          <rect x="204" y="64" width="18" height="40" rx="7" fill="#0d0a18" stroke="rgba(201,169,110,.2)" stroke-width="1"/>
+          <rect x="213" y="72" width="5" height="3" rx="1" fill="rgba(56,207,255,.6)" filter="url(#gb)"/>
+          <rect x="213" y="79" width="5" height="3" rx="1" fill="rgba(56,207,255,.3)"/>
+          <rect x="213" y="86" width="5" height="3" rx="1" fill="rgba(56,207,255,.6)" filter="url(#gb)"/>
+          <!-- Face screen -->
+          <rect x="68" y="54" width="124" height="72" rx="10" fill="url(#rscr)" stroke="rgba(57,255,133,.18)" stroke-width="1"/>
+          <rect x="68" y="54" width="124" height="3" fill="rgba(57,255,133,.05)" style="animation:scanLine 1.8s linear infinite;"/>
+          <!-- Eyes -->
+          <rect x="82" y="68" width="38" height="30" rx="6" fill="#020808" stroke="rgba(57,255,133,.45)" stroke-width="1"/>
+          <g style="animation:eyeShift 4s ease-in-out infinite;">
+            <rect x="90" y="74" width="22" height="18" rx="4" fill="rgba(57,255,133,.12)"/>
+            <rect x="95" y="77" width="12" height="12" rx="3" fill="rgba(57,255,133,.45)" filter="url(#gg)"/>
+            <rect x="99" y="80" width="6" height="8" rx="1" fill="rgba(57,255,133,.95)" filter="url(#gg)"/>
+            <rect x="101" y="81" width="2" height="2" rx=".5" fill="#fff" opacity=".9"/>
+          </g>
+          <rect x="140" y="68" width="38" height="30" rx="6" fill="#020808" stroke="rgba(57,255,133,.45)" stroke-width="1"/>
+          <g style="animation:eyeShift 4s ease-in-out infinite;">
+            <rect x="148" y="74" width="22" height="18" rx="4" fill="rgba(57,255,133,.12)"/>
+            <rect x="153" y="77" width="12" height="12" rx="3" fill="rgba(57,255,133,.45)" filter="url(#gg)"/>
+            <rect x="157" y="80" width="6" height="8" rx="1" fill="rgba(57,255,133,.95)" filter="url(#gg)"/>
+            <rect x="159" y="81" width="2" height="2" rx=".5" fill="#fff" opacity=".9"/>
+          </g>
+          <!-- Mouth display -->
+          <rect x="84" y="106" width="92" height="12" rx="4" fill="#020808" stroke="rgba(201,169,110,.2)" stroke-width="1"/>
+          <rect x="88" y="109" width="4" height="4" rx="1" fill="rgba(201,169,110,.5)"/>
+          <rect x="100" y="108" width="4" height="6" rx="1" fill="rgba(201,169,110,.7)" filter="url(#gg)"/>
+          <rect x="106" y="107" width="4" height="8" rx="1" fill="rgba(57,255,133,.95)" filter="url(#gg)"/>
+          <rect x="112" y="107" width="8" height="8" rx="1" fill="rgba(57,255,133,1)" filter="url(#gg)"/>
+          <rect x="122" y="107" width="8" height="8" rx="1" fill="rgba(57,255,133,1)" filter="url(#gg)"/>
+          <rect x="132" y="107" width="4" height="8" rx="1" fill="rgba(57,255,133,.95)" filter="url(#gg)"/>
+          <rect x="138" y="108" width="4" height="6" rx="1" fill="rgba(201,169,110,.7)" filter="url(#gg)"/>
+          <rect x="150" y="109" width="4" height="4" rx="1" fill="rgba(201,169,110,.5)"/>
+        </svg>
+        <div class="robot-click-hint">CLICK TO CHAT</div>
+      </div>
+    </div><!-- robot-stage -->
+  </div><!-- hero-right -->
+
+  <div class="scroll-hint" id="home">
+    <div class="scroll-line"></div>
+    Scroll to explore
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker"><div class="ticker-track" id="ttrack"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE 2 — THE ORIGIN STORY (About)
+══════════════════════════════════════════════ -->
+<section id="about">
+  <!-- Chapter header -->
+  <div class="chapter-header reveal">
+    <div class="chapter-num">01</div>
+    <div class="chapter-meta">
+      <div class="chapter-label">Chapter One · The Origin</div>
+      <h2 class="chapter-title">The mind<br>behind the <em>model</em></h2>
+    </div>
+  </div>
+
+  <!-- Timeline body -->
+  <div class="about-timeline">
+    <div class="timeline-spine">
+      <div class="timeline-dot active" data-beat="0"></div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-dot" data-beat="1"></div>
+      <div class="timeline-connector"></div>
+      <div class="timeline-dot" data-beat="2"></div>
+    </div>
+    <div class="story-body">
+      <div class="story-beat" data-beat="0">
+        <div class="beat-eyebrow">The Beginning · UMSL 2021</div>
+        <p class="beat-text">
+          I'm Rashmika — a <strong>Computer Science graduate</strong> from the University of Missouri–St. Louis,
+          graduating <span class="hl">May 2025</span>, with a Minor in Mathematics and an
+          <span class="hl">AI Certification</span>. I arrived in the US as an
+          <strong>international student</strong> with one clear mission: use data to solve problems that
+          actually matter.
+        </p>
+      </div>
+      <div class="story-beat" data-beat="1">
+        <div class="beat-eyebrow">The Curiosity · 2022–2023</div>
+        <p class="beat-text">
+          Not mental health statistics in a paper — but <strong>real classifiers that predict depression</strong>
+          from a student's lifestyle. Not fraud theory — but
+          <strong>unsupervised algorithms that catch it with zero labels.</strong>
+          Not pre-built sklearn pipelines — but <span class="hl">neural networks built from closed-form equations,
+          derived by hand</span>, line by line, until the math made sense.
+        </p>
+      </div>
+      <div class="story-beat" data-beat="2">
+        <div class="beat-eyebrow">The Builder · 2024–Present</div>
+        <p class="beat-text">
+          Today I've shipped <strong>8+ ML projects</strong>, achieving <span class="hl">89.47% accuracy</span>
+          on medical classification, <span class="hl">94.25% F1-score</span> on depression prediction,
+          and built Tableau dashboards that turn 8,807 rows of Netflix data into
+          <strong>self-service executive intelligence</strong>. I don't wait to be taught.
+          <span class="hl">I build to learn.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="about-stats-row reveal">
+    <div class="asr-cell"><div class="asr-n">89%</div><div class="asr-l">Peak Accuracy</div></div>
+    <div class="asr-cell"><div class="asr-n">94%</div><div class="asr-l">Peak F1-Score</div></div>
+    <div class="asr-cell"><div class="asr-n">8+</div><div class="asr-l">Projects Built</div></div>
+    <div class="asr-cell"><div class="asr-n">∞</div><div class="asr-l">Drive</div></div>
+  </div>
+
+  <!-- Quote -->
+  <div class="about-quote reveal">
+    <div class="quote-bar"></div>
+    <p class="quote-text">"I don't wait for internships to teach me — I build to learn."</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     PAGE 3 — THE MISSIONS (Projects)
+══════════════════════════════════════════════ -->
+<section class="skills reveal" id="skills">
+  <div class="skills-header">
+    <div>
+      <div style="font-family:var(--ff-m);font-size:8px;letter-spacing:5px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;">Chapter Three · The Arsenal</div>
+      <h2 class="chapter-title">Systems &amp;<br><em>Weaponry</em></h2>
+    </div>
+    <div class="skills-hint"><span class="hint-key">⌨</span>hover or press any keyboard key to unlock a skill</div>
+  </div>
+  <div class="kb-stage">
+    <div class="kb-scene"><div class="kb-body"><div class="kb-chassis">
+      <div class="kb-row">
+        <div class="key wfn cat-spec" data-k="Escape" data-n="Flow State"      data-c="Mindset"   data-d="Deep work. Reset and solve from first principles." data-l="100" data-ln="CORE"><span class="key-label">ESC</span></div>
+        <div style="flex:1"></div>
+        <div class="key wfn cat-ml"   data-k="F1"  data-n="Machine Learning" data-c="ML · AI"   data-d="Supervised, unsupervised. Regression through deep learning." data-l="90" data-ln="ADVANCED"><span class="key-label">F1</span><span class="key-skill">ML</span></div>
+        <div class="key wfn cat-ml"   data-k="F2"  data-n="Neural Networks"  data-c="ML · AI"   data-d="Keras Dense→Dropout→Sigmoid. 89.47% diabetes classifier." data-l="88" data-ln="ADVANCED"><span class="key-label">F2</span><span class="key-skill">NN</span></div>
+        <div class="key wfn cat-ml"   data-k="F3"  data-n="Cross-Validation" data-c="ML · AI"   data-d="5-Fold StratifiedKFold. Anti-leakage in every project." data-l="88" data-ln="ADVANCED"><span class="key-label">F3</span><span class="key-skill">CV</span></div>
+        <div class="key wfn cat-ml"   data-k="F4"  data-n="Random Forest"    data-c="ML · AI"   data-d="Beat published benchmark 83.64% to 88% on depression dataset." data-l="86" data-ln="ADVANCED"><span class="key-label">F4</span><span class="key-skill">RF</span></div>
+        <div style="flex:.5"></div>
+        <div class="key wfn cat-lang" data-k="F5"  data-n="Python"           data-c="Languages" data-d="Primary weapon. 3+ years. Data, ML, web, automation — one language." data-l="95" data-ln="EXPERT"><span class="key-label">F5</span><span class="key-skill">PY</span></div>
+        <div class="key wfn cat-lang" data-k="F6"  data-n="SQL"              data-c="Languages" data-d="Complex joins, CTEs, window functions. PostgreSQL and MySQL daily." data-l="88" data-ln="ADVANCED"><span class="key-label">F6</span><span class="key-skill">SQL</span></div>
+        <div class="key wfn cat-lang" data-k="F7"  data-n="R Language"       data-c="Languages" data-d="Statistical modelling, ggplot2, tidyverse." data-l="70" data-ln="INTERMEDIATE"><span class="key-label">F7</span><span class="key-skill">R</span></div>
+        <div class="key wfn cat-lang" data-k="F8"  data-n="JavaScript"       data-c="Languages" data-d="ES6+, Canvas API. Built this portfolio's cinematic universe." data-l="68" data-ln="INTERMEDIATE"><span class="key-label">F8</span><span class="key-skill">JS</span></div>
+        <div style="flex:.5"></div>
+        <div class="key wfn cat-data" data-k="F9"  data-n="Tableau"          data-c="Data · BI" data-d="Netflix 8,807 titles. 5 self-service executive dashboards." data-l="90" data-ln="ADVANCED"><span class="key-label">F9</span><span class="key-skill">TAB</span></div>
+        <div class="key wfn cat-data" data-k="F10" data-n="Power BI"         data-c="Data · BI" data-d="DAX, drill-through reports, data model relationships." data-l="78" data-ln="INTERMEDIATE"><span class="key-label">F10</span><span class="key-skill">PBI</span></div>
+        <div class="key wfn cat-cloud" data-k="F11" data-n="AWS"             data-c="Cloud"     data-d="S3, EC2, Lambda, SageMaker. Cloud ML deployment." data-l="70" data-ln="INTERMEDIATE"><span class="key-label">F11</span><span class="key-skill">AWS</span></div>
+        <div class="key wfn cat-cloud" data-k="F12" data-n="Azure"           data-c="Cloud"     data-d="Azure ML, DevOps, blob storage, cognitive services." data-l="68" data-ln="INTERMEDIATE"><span class="key-label">F12</span><span class="key-skill">AZ</span></div>
+      </div>
+      <div class="kb-row" style="margin-top:10px">
+        <div class="key cat-ml"    data-k="`" data-n="Scikit-Learn"     data-c="ML · AI"   data-d="Pipelines, GridSearchCV, 40+ estimators. Daily driver." data-l="92" data-ln="EXPERT"><span class="key-label">~</span><span class="key-skill">SKIT</span></div>
+        <div class="key cat-ml"    data-k="1" data-n="TensorFlow/Keras" data-c="ML · AI"   data-d="Sequential and Functional API. Custom callbacks, checkpointing." data-l="90" data-ln="ADVANCED"><span class="key-label">1</span><span class="key-skill">TF</span></div>
+        <div class="key cat-ml"    data-k="2" data-n="SHAP"             data-c="ML · AI"   data-d="Explainability. Glucose SHAP=0.42 is the top predictor." data-l="85" data-ln="ADVANCED"><span class="key-label">2</span><span class="key-skill">SHAP</span></div>
+        <div class="key cat-lang"  data-k="3" data-n="Pandas"           data-c="Languages" data-d="DataFrames, merges, groupby, pivot tables, time series." data-l="92" data-ln="EXPERT"><span class="key-label">3</span><span class="key-skill">PD</span></div>
+        <div class="key cat-lang"  data-k="4" data-n="NumPy"            data-c="Languages" data-d="Vectorised ops, matrix algebra. OLS from scratch, no sklearn." data-l="90" data-ln="ADVANCED"><span class="key-label">4</span><span class="key-skill">NP</span></div>
+        <div class="key cat-ml"    data-k="5" data-n="Isolation Forest" data-c="ML · AI"   data-d="Unsupervised anomaly detection. Zero labels needed." data-l="80" data-ln="ADVANCED"><span class="key-label">5</span><span class="key-skill">ISO</span></div>
+        <div class="key cat-ml"    data-k="6" data-n="HDBSCAN"          data-c="ML · AI"   data-d="Hierarchical density clustering. Better than KMeans on fraud data." data-l="78" data-ln="INTERMEDIATE"><span class="key-label">6</span><span class="key-skill">HDB</span></div>
+        <div class="key cat-ml"    data-k="7" data-n="PCA"              data-c="ML · AI"   data-d="68% variance in 2 components on fraud dataset." data-l="82" data-ln="ADVANCED"><span class="key-label">7</span><span class="key-skill">PCA</span></div>
+        <div class="key cat-data"  data-k="8" data-n="PostgreSQL"       data-c="Data · BI" data-d="Schema design, indexing, stored procedures, complex joins." data-l="85" data-ln="ADVANCED"><span class="key-label">8</span><span class="key-skill">PG</span></div>
+        <div class="key cat-data"  data-k="9" data-n="Matplotlib"       data-c="Data · BI" data-d="ROC curves, SHAP beeswarms, confusion matrices." data-l="88" data-ln="ADVANCED"><span class="key-label">9</span><span class="key-skill">MPL</span></div>
+        <div class="key cat-data"  data-k="0" data-n="Seaborn"          data-c="Data · BI" data-d="Statistical viz. Heatmaps, pair plots, violin plots." data-l="85" data-ln="ADVANCED"><span class="key-label">0</span><span class="key-skill">SNS</span></div>
+        <div class="key cat-cloud" data-k="-" data-n="Docker"           data-c="Cloud"     data-d="Containerised ML. Dev-to-prod parity every time." data-l="64" data-ln="INTERMEDIATE"><span class="key-label">-</span><span class="key-skill">DCK</span></div>
+        <div class="key cat-cloud" data-k="=" data-n="Git / GitLab"     data-c="Cloud"     data-d="Branching, PRs, CI/CD pipelines." data-l="88" data-ln="ADVANCED"><span class="key-label">+</span><span class="key-skill">GIT</span></div>
+        <div class="key w2 cat-spec" data-k="Backspace" data-n="UiPath RPA" data-c="Automation" data-d="RPA Studio. Attended and unattended bots. Certified." data-l="72" data-ln="INTERMEDIATE"><span class="key-label">RPA ⌫</span></div>
+      </div>
+      <div class="kb-row">
+        <div class="key w15 cat-spec" data-k="Tab" data-n="Data Pipelines" data-c="System"    data-d="End-to-end: ingest, clean, transform, model, serve, monitor." data-l="82" data-ln="ADVANCED"><span class="key-label">TAB</span></div>
+        <div class="key cat-ml"    data-k="q" data-n="KNN"             data-c="ML · AI"   data-d="K-Nearest Neighbors. Distance-based baseline every project." data-l="80" data-ln="ADVANCED"><span class="key-label">Q</span><span class="key-skill">KNN</span></div>
+        <div class="key cat-lang"  data-k="w" data-n="HTML / CSS"      data-c="Languages" data-d="Semantic markup, Flexbox, Grid, animations. Built this portfolio." data-l="74" data-ln="INTERMEDIATE"><span class="key-label">W</span><span class="key-skill">HTML</span></div>
+        <div class="key cat-ml"    data-k="e" data-n="Ensemble Methods" data-c="ML · AI"  data-d="Bagging, boosting, stacking. Weak learners to strong predictions." data-l="82" data-ln="ADVANCED"><span class="key-label">E</span><span class="key-skill">ENS</span></div>
+        <div class="key cat-lang"  data-k="r" data-n="R Language"      data-c="Languages" data-d="Statistical computing. ggplot2, dplyr, linear models." data-l="70" data-ln="INTERMEDIATE"><span class="key-label">R</span><span class="key-skill">R</span></div>
+        <div class="key cat-ml"    data-k="t" data-n="TensorFlow"      data-c="ML · AI"   data-d="Keras API. Adam, early stopping, batch normalisation." data-l="90" data-ln="ADVANCED"><span class="key-label">T</span><span class="key-skill">TF</span></div>
+        <div class="key cat-lang"  data-k="y" data-n="Python"          data-c="Languages" data-d="3+ years. Data wrangling to deep learning to automation." data-l="95" data-ln="EXPERT"><span class="key-label">Y</span><span class="key-skill">PY</span></div>
+        <div class="key cat-cloud" data-k="u" data-n="UiPath"          data-c="Automation" data-d="Sequence and flowchart bots. Attended and unattended." data-l="72" data-ln="INTERMEDIATE"><span class="key-label">U</span><span class="key-skill">RPA</span></div>
+        <div class="key cat-ml"    data-k="i" data-n="Imbalanced Data" data-c="ML · AI"   data-d="SMOTE, class_weight, stratified splits. Critical for medical data." data-l="78" data-ln="INTERMEDIATE"><span class="key-label">I</span><span class="key-skill">IMB</span></div>
+        <div class="key cat-ml"    data-k="o" data-n="OLS Regression"  data-c="ML · AI"   data-d="Beta=(XtX)^-1 Xt y derived by hand. Zero library use." data-l="90" data-ln="ADVANCED"><span class="key-label">O</span><span class="key-skill">OLS</span></div>
+        <div class="key cat-lang"  data-k="p" data-n="PHP"             data-c="Languages" data-d="Server-side scripting, session handling, CMS backends." data-l="65" data-ln="INTERMEDIATE"><span class="key-label">P</span><span class="key-skill">PHP</span></div>
+        <div class="key cat-data"  data-k="[" data-n="Databricks"      data-c="Data · BI" data-d="Spark DataFrames, Delta Lake, MLflow experiment tracking." data-l="66" data-ln="INTERMEDIATE"><span class="key-label">[</span><span class="key-skill">DBR</span></div>
+        <div class="key cat-cloud" data-k="]" data-n="Kubernetes"      data-c="Cloud"     data-d="Pod management, services, deployments. Currently learning." data-l="50" data-ln="LEARNING"><span class="key-label">]</span><span class="key-skill">K8S</span></div>
+        <div class="key cat-spec"  data-k="\" data-n="API Design"     data-c="System"    data-d="RESTful APIs, JSON payloads, auth, versioning." data-l="70" data-ln="INTERMEDIATE"><span class="key-label">|</span><span class="key-skill">API</span></div>
+      </div>
+      <div class="kb-row">
+        <div class="key w2 cat-spec"  data-k="CapsLock" data-n="Problem Solving" data-c="Mindset" data-d="First principles. Break to atoms, rebuild from the ground up." data-l="100" data-ln="CORE"><span class="key-label">CAPS LOCK</span></div>
+        <div class="key cat-cloud" data-k="a" data-n="AWS"             data-c="Cloud"     data-d="EC2, S3, Lambda, SageMaker. Cloud ML deployment." data-l="70" data-ln="INTERMEDIATE"><span class="key-label">A</span><span class="key-skill">AWS</span></div>
+        <div class="key cat-ml"    data-k="s" data-n="SVM"             data-c="ML · AI"   data-d="RBF kernel. 85% F1-score on student depression dataset." data-l="85" data-ln="ADVANCED"><span class="key-label">S</span><span class="key-skill">SVM</span></div>
+        <div class="key cat-data"  data-k="d" data-n="Databricks"      data-c="Data · BI" data-d="Spark SQL, Delta Lake, MLflow." data-l="66" data-ln="INTERMEDIATE"><span class="key-label">D</span><span class="key-skill">DBR</span></div>
+        <div class="key cat-ml"    data-k="f" data-n="Feature Eng."    data-c="ML · AI"   data-d="Normalisation, one-hot encoding, selection, polynomial features." data-l="88" data-ln="ADVANCED"><span class="key-label">F</span><span class="key-skill">FE</span></div>
+        <div class="key cat-cloud" data-k="g" data-n="Git / GitLab"    data-c="Cloud"     data-d="Version control, CI/CD, branching, merge requests." data-l="88" data-ln="ADVANCED"><span class="key-label">G</span><span class="key-skill">GIT</span></div>
+        <div class="key cat-ml"    data-k="h" data-n="Hyperparameter"  data-c="ML · AI"   data-d="GridSearchCV, RandomizedSearch, Optuna. Systematic optimisation." data-l="82" data-ln="ADVANCED"><span class="key-label">H</span><span class="key-skill">HPO</span></div>
+        <div class="key cat-lang"  data-k="j" data-n="JavaScript"      data-c="Languages" data-d="ES6+, async/await, Canvas 2D, IntersectionObserver." data-l="68" data-ln="INTERMEDIATE"><span class="key-label">J</span><span class="key-skill">JS</span></div>
+        <div class="key cat-ml"    data-k="k" data-n="Keras"           data-c="ML · AI"   data-d="Dense(64,relu) to Dropout(0.3) to Dense(1,sigmoid). 89.47% accuracy." data-l="90" data-ln="ADVANCED"><span class="key-label">K</span><span class="key-skill">KERAS</span></div>
+        <div class="key cat-ml"    data-k="l" data-n="Logistic Regr."  data-c="ML · AI"   data-d="Gradient descent from scratch. 1,461 iterations. No sklearn." data-l="90" data-ln="ADVANCED"><span class="key-label">L</span><span class="key-skill">LR</span></div>
+        <div class="key cat-data"  data-k=";" data-n="MySQL"           data-c="Data · BI" data-d="Schema design, stored procedures, triggers, joins." data-l="82" data-ln="ADVANCED"><span class="key-label">;</span><span class="key-skill">SQL</span></div>
+        <div class="key cat-data"  data-k="'" data-n="Seaborn"         data-c="Data · BI" data-d="Statistical viz. Pair plots, violin, heatmaps." data-l="85" data-ln="ADVANCED"><span class="key-label">'</span><span class="key-skill">SNS</span></div>
+        <div class="key w2 cat-spec" data-k="Enter" data-n="Ship It"   data-c="Mindset"   data-d="I deploy. I iterate. I ship software that solves real problems." data-l="100" data-ln="CORE"><span class="key-label">ENTER ↵</span></div>
+      </div>
+      <div class="kb-row">
+        <div class="key w25 cat-spec" data-k="Shift"      data-n="Initiative"   data-c="Mindset"    data-d="I identify the gap and build the solution. I do not wait." data-l="100" data-ln="CORE"><span class="key-label">SHIFT</span></div>
+        <div class="key cat-data"  data-k="z" data-n="Databricks"    data-c="Data · BI"  data-d="Collaborative notebooks. Delta Lake tables." data-l="66" data-ln="INTERMEDIATE"><span class="key-label">Z</span><span class="key-skill">DBR</span></div>
+        <div class="key cat-ml"    data-k="x" data-n="XGBoost"       data-c="ML · AI"    data-d="Extreme Gradient Boosting. High-performance tabular data." data-l="76" data-ln="INTERMEDIATE"><span class="key-label">X</span><span class="key-skill">XGB</span></div>
+        <div class="key cat-ml"    data-k="c" data-n="Classification" data-c="ML · AI"   data-d="Binary and multi-class. F1, ROC/AUC, confusion matrix." data-l="92" data-ln="ADVANCED"><span class="key-label">C</span><span class="key-skill">CLF</span></div>
+        <div class="key cat-data"  data-k="v" data-n="Visualisation"  data-c="Data · BI" data-d="Chart design, colour theory, executive dashboard UX." data-l="84" data-ln="ADVANCED"><span class="key-label">V</span><span class="key-skill">VIZ</span></div>
+        <div class="key cat-lang"  data-k="b" data-n="Bash / Linux"   data-c="Languages" data-d="Shell scripting, cron, env management." data-l="70" data-ln="INTERMEDIATE"><span class="key-label">B</span><span class="key-skill">BASH</span></div>
+        <div class="key cat-ml"    data-k="n" data-n="NLP"            data-c="ML · AI"   data-d="Text preprocessing, TF-IDF, sentiment analysis, embeddings." data-l="72" data-ln="INTERMEDIATE"><span class="key-label">N</span><span class="key-skill">NLP</span></div>
+        <div class="key cat-data"  data-k="m" data-n="Matplotlib"     data-c="Data · BI" data-d="ROC curves, SHAP beeswarms, learning curves." data-l="88" data-ln="ADVANCED"><span class="key-label">M</span><span class="key-skill">MPL</span></div>
+        <div class="key cat-ml"    data-k="," data-n="Cross-Val"      data-c="ML · AI"   data-d="StratifiedKFold, GroupKFold. Anti-leakage every project." data-l="88" data-ln="ADVANCED"><span class="key-label">&lt;</span><span class="key-skill">CV</span></div>
+        <div class="key cat-ml"    data-k="." data-n="ROC / AUC"      data-c="ML · AI"   data-d="Receiver Operating Characteristic. AUC 0.91 diabetes model." data-l="88" data-ln="ADVANCED"><span class="key-label">&gt;</span><span class="key-skill">ROC</span></div>
+        <div class="key cat-data"  data-k="/" data-n="Power BI"       data-c="Data · BI" data-d="DAX, data model relationships, drill-through, bookmarks." data-l="78" data-ln="INTERMEDIATE"><span class="key-label">?</span><span class="key-skill">PBI</span></div>
+        <div class="key w25 cat-spec" data-k="ShiftRight" data-n="Adaptability" data-c="Mindset" data-d="International student. New country, new field every semester. I adapt fast." data-l="100" data-ln="CORE"><span class="key-label">SHIFT</span></div>
+      </div>
+      <div class="kb-row">
+        <div class="key w15 cat-cloud" data-k="Control"     data-n="Azure"         data-c="Cloud"     data-d="Azure ML, DevOps CI/CD, blob storage." data-l="68" data-ln="INTERMEDIATE"><span class="key-label">CTRL</span><span class="key-skill">AZ</span></div>
+        <div class="key cat-spec"      data-k="Meta"         data-n="Vision"        data-c="Mindset"   data-d="Build AI that solves real human problems. Healthcare, mental health, equity." data-l="100" data-ln="CORE"><span class="key-label">CMD</span></div>
+        <div class="key w15 cat-cloud" data-k="Alt"          data-n="Docker"        data-c="Cloud"     data-d="Containerised ML. Consistent dev-to-prod." data-l="64" data-ln="INTERMEDIATE"><span class="key-label">ALT</span><span class="key-skill">DCK</span></div>
+        <div class="key wsp cat-lang"  data-k=" "            data-n="Python"        data-c="Languages" data-d="Python is home. Pandas, NumPy, sklearn, Keras, Matplotlib — infinite power." data-l="95" data-ln="EXPERT"><span class="key-label" style="letter-spacing:3px;font-size:7px">PYTHON · PRIMARY WEAPON</span></div>
+        <div class="key w15 cat-cloud" data-k="AltRight"     data-n="UiPath"        data-c="Automation" data-d="Attended and unattended RPA. Certified practitioner." data-l="72" data-ln="INTERMEDIATE"><span class="key-label">ALT</span><span class="key-skill">RPA</span></div>
+        <div class="key cat-spec"      data-k="ContextMenu"  data-n="Communication" data-c="Soft Skills" data-d="I can explain PCA to a CEO. Data storytelling is a superpower." data-l="88" data-ln="ADVANCED"><span class="key-label">MENU</span></div>
+        <div class="key w15 cat-data"  data-k="ControlRight" data-n="Tableau"       data-c="Data · BI" data-d="8,807-title Netflix dashboard. 5 self-service executive views." data-l="90" data-ln="ADVANCED"><span class="key-label">CTRL</span><span class="key-skill">TAB</span></div>
+      </div>
+    </div></div></div>
+    <div class="kb-info" id="kbInfo">
+      <div class="kb-idle" id="kbIdle">
+        <div class="idle-row"><div class="ik">P</div><div class="ik">Y</div><div class="ik">T</div><div class="ik">H</div><div class="ik">O</div><div class="ik">N</div></div>
+        <div class="idle-hint">hover a key or press your keyboard</div>
+        <div style="font-family:var(--ff-d);font-size:20px;color:rgba(201,169,110,.25);font-style:italic;margin-top:4px;">to reveal a skill</div>
+      </div>
+      <div class="kb-detail" id="kbDetail">
+        <div class="det-badge" id="detBadge"><span id="detDot" style="width:7px;height:7px;border-radius:2px;background:currentColor;display:inline-block;flex-shrink:0;"></span><span id="detCat"></span></div>
+        <div class="det-name" id="detName"></div>
+        <div class="det-desc" id="detDesc"></div>
+        <div class="det-bar-hd"><span>Proficiency</span><span id="detLvName"></span></div>
+        <div class="det-bar-track"><div class="det-bar-fill" id="detBar" style="width:0%"></div></div>
+        <div class="det-key">KEY <span id="detKeyChip" class="det-keychip">?</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="kb-legend">
+    <div class="leg-item"><div class="leg-dot" style="--lc:#39ff85"></div>ML &amp; AI</div>
+    <div class="leg-item"><div class="leg-dot" style="--lc:#38cfff"></div>Languages</div>
+    <div class="leg-item"><div class="leg-dot" style="--lc:#d4849a"></div>Data &amp; BI</div>
+    <div class="leg-item"><div class="leg-dot" style="--lc:#c9a96e"></div>Cloud &amp; Tools</div>
+    <div class="leg-item"><div class="leg-dot" style="--lc:#9d7de8"></div>Mindset</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     PAGE 5 — THE PORTAL (Contact)
+     Added contact form with micro-interactions.
+══════════════════════════════════════════════ -->
+<section class="projects-section reveal" id="projects">
+  <div class="proj-header">
+    <div class="chapter-label" style="font-family:var(--ff-m);font-size:8px;letter-spacing:5px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:12px;">Chapter Four · The Missions <span style="flex:1;height:1px;background:var(--border);"></span></div>
+    <h2 class="chapter-title">Five missions,<br>five <em>breakthroughs</em></h2>
+    <p class="proj-hint">Click any mission — the universe shifts around it</p>
+  </div>
+
+  <div class="proj-list">
+
+    <!-- MISSION 01: DIABETES -->
+    <div class="proj-row reveal" id="p1" style="--accent-color:#39ff85;--accent-rgb:57,255,133;">
+      <div class="prh" onclick="openProject('p1')">
+        <span class="prh-num">01</span>
+        <span class="prh-title">Diabetes Prediction Neural Network</span>
+        <div class="prh-tags">
+          <span class="prh-tag">Keras</span><span class="prh-tag">SHAP</span><span class="prh-tag">Neural Net</span>
+        </div>
+        <span class="prh-plus">+</span>
+      </div>
+      <div class="drawer"><div class="drawer-inner">
+        <div class="mission-brief">
+          <span class="brief-dot"></span>
+          Mission 01 · Healthcare AI · Status: COMPLETE · Accuracy achieved: 89.47%
+        </div>
+        <div class="proj-cinema">
+          <div class="proj-scene">
+            <canvas class="proj-scene-canvas" id="sc1" data-accent="#39ff85" data-bg1="#030e08" data-bg2="#0a2010"></canvas>
+            <div class="proj-scene-overlay"></div>
+            <div class="proj-orb" style="box-shadow:0 0 40px rgba(57,255,133,.3);">
+              <span class="proj-orb-icon">🧬</span>
+            </div>
+            <div class="proj-orb-name">Heart Health</div>
+            <div class="proj-orb-dots"><div class="pod on"></div><div class="pod"></div><div class="pod"></div></div>
+            <div class="proj-info-card" style="border-color:rgba(57,255,133,.2);">
+              High in omega-3, fiber and potassium.<br><br>Helps lower risk of heart disease, blood clots, and high blood pressure.
+            </div>
+          </div>
+          <div class="proj-content">
+            <div class="pc-eyebrow">Neural Network · Healthcare AI</div>
+            <div class="pc-title">Diabetes Prediction<br>with SHAP Explainability</div>
+            <div class="pc-desc">537M adults have diabetes globally. Early detection saves lives. I trained a deep neural net and beat every baseline — with full explainability via SHAP values.</div>
+            <div class="pc-metrics">
+              <div class="pc-metric"><div class="pm-v">89.47%</div><div class="pm-l">Accuracy</div></div>
+              <div class="pc-metric"><div class="pm-v">94.25%</div><div class="pm-l">F1-Score</div></div>
+              <div class="pc-metric"><div class="pm-v">0.91</div><div class="pm-l">AUC-ROC</div></div>
+              <div class="pc-metric"><div class="pm-v">+6.2%</div><div class="pm-l">Over Baseline</div></div>
+            </div>
+            <div class="pc-bars">
+              <div class="bar-title">Model Comparison</div>
+              <div class="bar-row"><span class="bar-lbl">Neural Net (Ours)</span><div class="bar-track"><div class="bar-fill" style="--w:89%;"></div></div><span class="bar-val">89%</span></div>
+              <div class="bar-row"><span class="bar-lbl">Logistic Regression</span><div class="bar-track"><div class="bar-fill" style="--w:83%;"></div></div><span class="bar-val">83%</span></div>
+              <div class="bar-row"><span class="bar-lbl">Random Forest</span><div class="bar-track"><div class="bar-fill" style="--w:81%;"></div></div><span class="bar-val">81%</span></div>
+            </div>
+            <div class="pc-steps">
+              <div class="pcs"><span class="pcs-n">01</span><div><div class="pcs-title">Architecture</div><div class="pcs-desc">Dense(64,ReLU) → Dropout(0.3) → Dense(32,ReLU) → Dense(1,Sigmoid). Adam optimizer.</div></div></div>
+              <div class="pcs"><span class="pcs-n">02</span><div><div class="pcs-title">SHAP Explainability</div><div class="pcs-desc">Glucose (SHAP=0.42) → BMI (0.31) → Age (0.18). Every prediction is transparent.</div></div></div>
+            </div>
+            <div class="pc-links">
+              <a href="#" class="pl pp">GitHub ↗</a><a href="#" class="pl pg">Full Report</a>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- MISSION 02: DEPRESSION -->
+    <div class="proj-row reveal" id="p2" style="--accent-color:#d4849a;--accent-rgb:212,132,154;">
+      <div class="prh" onclick="openProject('p2')">
+        <span class="prh-num">02</span>
+        <span class="prh-title">Student Depression Prediction</span>
+        <div class="prh-tags">
+          <span class="prh-tag">Random Forest</span><span class="prh-tag">SVM</span><span class="prh-tag">scikit-learn</span>
+        </div>
+        <span class="prh-plus">+</span>
+      </div>
+      <div class="drawer"><div class="drawer-inner">
+        <div class="mission-brief">
+          <span class="brief-dot" style="background:var(--rose);box-shadow:0 0 8px var(--rose);"></span>
+          Mission 02 · Mental Health AI · Status: COMPLETE · Beat prior research benchmark
+        </div>
+        <div class="proj-cinema">
+          <div class="proj-scene">
+            <canvas class="proj-scene-canvas" id="sc2" data-accent="#d4849a" data-bg1="#0e0310" data-bg2="#1a0520"></canvas>
+            <div class="proj-scene-overlay"></div>
+            <div class="proj-orb" style="box-shadow:0 0 40px rgba(212,132,154,.3);">
+              <span class="proj-orb-icon">🧠</span>
+            </div>
+            <div class="proj-orb-name">Mental Health</div>
+            <div class="proj-orb-dots"><div class="pod on"></div><div class="pod"></div><div class="pod"></div></div>
+            <div class="proj-info-card" style="border-color:rgba(212,132,154,.2);">Sleep Hours & GPA are the strongest predictors. 1 in 3 students struggles silently.</div>
+          </div>
+          <div class="proj-content">
+            <div class="pc-eyebrow">Random Forest · Mental Health AI</div>
+            <div class="pc-title">Student Depression<br>Prediction</div>
+            <div class="pc-desc">1 in 3 college students faces significant depression. I built a classifier from academic + lifestyle data that <strong>beat prior published research</strong> at 83.64% F1.</div>
+            <div class="pc-metrics">
+              <div class="pc-metric"><div class="pm-v">83.64%</div><div class="pm-l">Prior Benchmark</div></div>
+              <div class="pc-metric"><div class="pm-v">88%</div><div class="pm-l">Our F1-Score</div></div>
+              <div class="pc-metric"><div class="pm-v">5-Fold</div><div class="pm-l">Cross Validation</div></div>
+              <div class="pc-metric"><div class="pm-v">12</div><div class="pm-l">Features Selected</div></div>
+            </div>
+            <div class="pc-bars">
+              <div class="bar-title">Performance vs Benchmarks</div>
+              <div class="bar-row"><span class="bar-lbl">Random Forest (Ours)</span><div class="bar-track"><div class="bar-fill" style="--w:88%;"></div></div><span class="bar-val">88%</span></div>
+              <div class="bar-row"><span class="bar-lbl">SVM (RBF)</span><div class="bar-track"><div class="bar-fill" style="--w:85%;"></div></div><span class="bar-val">85%</span></div>
+              <div class="bar-row"><span class="bar-lbl">Prior Research</span><div class="bar-track"><div class="bar-fill" style="--w:83%;"></div></div><span class="bar-val">83%</span></div>
+            </div>
+            <div class="pc-links"><a href="#" class="pl pp">GitHub ↗</a></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- MISSION 03: REGRESSION -->
+    <div class="proj-row reveal" id="p3" style="--accent-color:#38cfff;--accent-rgb:56,207,255;">
+      <div class="prh" onclick="openProject('p3')">
+        <span class="prh-num">03</span>
+        <span class="prh-title">Linear & Logistic Regression from Scratch</span>
+        <div class="prh-tags">
+          <span class="prh-tag">NumPy</span><span class="prh-tag">OLS</span><span class="prh-tag">Gradient Descent</span>
+        </div>
+        <span class="prh-plus">+</span>
+      </div>
+      <div class="drawer"><div class="drawer-inner">
+        <div class="mission-brief">
+          <span class="brief-dot" style="background:var(--blue);box-shadow:0 0 8px var(--blue);"></span>
+          Mission 03 · Pure Mathematics · Status: COMPLETE · No sklearn used
+        </div>
+        <div class="proj-cinema">
+          <div class="proj-scene">
+            <canvas class="proj-scene-canvas" id="sc3" data-accent="#38cfff" data-bg1="#021218" data-bg2="#041e28"></canvas>
+            <div class="proj-scene-overlay"></div>
+            <div class="proj-orb" style="box-shadow:0 0 40px rgba(56,207,255,.3);">
+              <span class="proj-orb-icon">📐</span>
+            </div>
+            <div class="proj-orb-name">Pure Math</div>
+            <div class="proj-orb-dots"><div class="pod on"></div><div class="pod"></div><div class="pod"></div></div>
+            <div class="proj-info-card" style="border-color:rgba(56,207,255,.2);">Derived closed-form OLS from first principles. Gradient descent converged in 1,461 iterations.</div>
+          </div>
+          <div class="proj-content">
+            <div class="pc-eyebrow">NumPy · Mathematical ML · No Libraries</div>
+            <div class="pc-title">Regression<br>from First Principles</div>
+            <div class="pc-desc">No sklearn. No shortcuts. I derived the closed-form OLS equations and implemented logistic regression with gradient descent entirely by hand.</div>
+            <div class="pc-metrics">
+              <div class="pc-metric"><div class="pm-v">0%</div><div class="pm-l">OLS Test Error</div></div>
+              <div class="pc-metric"><div class="pm-v">75%</div><div class="pm-l">Logistic Acc</div></div>
+              <div class="pc-metric"><div class="pm-v">1,461</div><div class="pm-l">GD Iterations</div></div>
+              <div class="pc-metric"><div class="pm-v">0.52</div><div class="pm-l">Final Log-Loss</div></div>
+            </div>
+            <div class="pc-bars">
+              <div class="bar-title">Results</div>
+              <div class="bar-row"><span class="bar-lbl">OLS Classifier</span><div class="bar-track"><div class="bar-fill" style="--w:100%;"></div></div><span class="bar-val">0% err</span></div>
+              <div class="bar-row"><span class="bar-lbl">Logistic GD</span><div class="bar-track"><div class="bar-fill" style="--w:75%;"></div></div><span class="bar-val">75%</span></div>
+              <div class="bar-row"><span class="bar-lbl">PLA (Separable)</span><div class="bar-track"><div class="bar-fill" style="--w:100%;"></div></div><span class="bar-val">0% err</span></div>
+            </div>
+            <div class="pc-links">
+              <a href="project2_copy.html" class="pl pp" target="_blank">Notebook ↗</a>
+              <a href="project2PDF_copy.pdf" class="pl pg" target="_blank">PDF Report</a>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- MISSION 04: FRAUD -->
+    <div class="proj-row reveal" id="p4" style="--accent-color:#ff6b6b;--accent-rgb:255,107,107;">
+      <div class="prh" onclick="openProject('p4')">
+        <span class="prh-num">04</span>
+        <span class="prh-title">Credit Card Fraud Detection</span>
+        <div class="prh-tags">
+          <span class="prh-tag">HDBSCAN</span><span class="prh-tag">Isolation Forest</span><span class="prh-tag">PCA</span>
+        </div>
+        <span class="prh-plus">+</span>
+      </div>
+      <div class="drawer"><div class="drawer-inner">
+        <div class="mission-brief">
+          <span class="brief-dot" style="background:#ff6b6b;box-shadow:0 0 8px #ff6b6b;"></span>
+          Mission 04 · Anomaly Detection · Status: COMPLETE · Zero labeled data used
+        </div>
+        <div class="proj-cinema">
+          <div class="proj-scene">
+            <canvas class="proj-scene-canvas" id="sc4" data-accent="#ff6b6b" data-bg1="#120204" data-bg2="#200408"></canvas>
+            <div class="proj-scene-overlay"></div>
+            <div class="proj-orb" style="box-shadow:0 0 40px rgba(255,107,107,.3);">
+              <span class="proj-orb-icon">🔍</span>
+            </div>
+            <div class="proj-orb-name">Anomaly Detection</div>
+            <div class="proj-orb-dots"><div class="pod on"></div><div class="pod"></div></div>
+            <div class="proj-info-card" style="border-color:rgba(255,107,107,.2);">No labels. 4 unsupervised algorithms tested. HDBSCAN + Isolation Forest won.</div>
+          </div>
+          <div class="proj-content">
+            <div class="pc-eyebrow">Unsupervised ML · Anomaly Detection</div>
+            <div class="pc-title">Credit Card Fraud<br>Detection</div>
+            <div class="pc-desc">Fraud costs $32B annually. The hard part: zero labels. I used 4 unsupervised algorithms to detect patterns purely from transaction anomalies.</div>
+            <div class="pc-metrics">
+              <div class="pc-metric"><div class="pm-v">4</div><div class="pm-l">Algorithms Tested</div></div>
+              <div class="pc-metric"><div class="pm-v">68%</div><div class="pm-l">PCA Variance</div></div>
+              <div class="pc-metric"><div class="pm-v">10%</div><div class="pm-l">Contamination</div></div>
+              <div class="pc-metric"><div class="pm-v">0</div><div class="pm-l">Labels Used</div></div>
+            </div>
+            <div class="pc-bars">
+              <div class="bar-title">Algorithm Battle</div>
+              <div class="bar-row"><span class="bar-lbl">Isolation Forest</span><div class="bar-track"><div class="bar-fill" style="--w:92%;"></div></div><span class="bar-val">Best</span></div>
+              <div class="bar-row"><span class="bar-lbl">HDBSCAN</span><div class="bar-track"><div class="bar-fill" style="--w:86%;"></div></div><span class="bar-val">↑↑</span></div>
+              <div class="bar-row"><span class="bar-lbl">KMeans</span><div class="bar-track"><div class="bar-fill" style="--w:52%;"></div></div><span class="bar-val">Weak</span></div>
+            </div>
+            <div class="pc-links"><a href="#" class="pl pp">GitHub ↗</a></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- MISSION 05: NETFLIX -->
+    <div class="proj-row reveal" id="p5" style="--accent-color:#c9a96e;--accent-rgb:201,169,110;">
+      <div class="prh" onclick="openProject('p5')">
+        <span class="prh-num">05</span>
+        <span class="prh-title">Netflix Content Analytics — Tableau</span>
+        <div class="prh-tags">
+          <span class="prh-tag">Tableau</span><span class="prh-tag">BI</span><span class="prh-tag">Data Storytelling</span>
+        </div>
+        <span class="prh-plus">+</span>
+      </div>
+      <div class="drawer"><div class="drawer-inner">
+        <div class="mission-brief">
+          <span class="brief-dot"></span>
+          Mission 05 · Business Intelligence · Status: COMPLETE · 8,807 titles analyzed
+        </div>
+        <div class="proj-cinema">
+          <div class="proj-scene">
+            <canvas class="proj-scene-canvas" id="sc5" data-accent="#c9a96e" data-bg1="#0d0900" data-bg2="#1a1200"></canvas>
+            <div class="proj-scene-overlay"></div>
+            <div class="proj-orb" style="box-shadow:0 0 40px rgba(201,169,110,.3);">
+              <span class="proj-orb-icon">📊</span>
+            </div>
+            <div class="proj-orb-name">Data Storytelling</div>
+            <div class="proj-orb-dots"><div class="pod on"></div><div class="pod"></div><div class="pod"></div><div class="pod"></div></div>
+            <div class="proj-info-card">8,807 titles. 190+ countries. 5 self-service dashboard views for non-technical executives.</div>
+          </div>
+          <div class="proj-content">
+            <div class="pc-eyebrow">Tableau · Business Intelligence</div>
+            <div class="pc-title">Netflix Content<br>Analytics Dashboard</div>
+            <div class="pc-desc">Stakeholders need global content strategy at a glance — without touching raw data. I built a fully self-service executive dashboard.</div>
+            <div class="pc-metrics">
+              <div class="pc-metric"><div class="pm-v">8,807</div><div class="pm-l">Titles</div></div>
+              <div class="pc-metric"><div class="pm-v">190+</div><div class="pm-l">Countries</div></div>
+              <div class="pc-metric"><div class="pm-v">5</div><div class="pm-l">Dashboard Views</div></div>
+              <div class="pc-metric"><div class="pm-v">69%</div><div class="pm-l">Movies</div></div>
+            </div>
+            <div class="pc-bars">
+              <div class="bar-title">Top Genres</div>
+              <div class="bar-row"><span class="bar-lbl">Drama</span><div class="bar-track"><div class="bar-fill" style="--w:100%;"></div></div><span class="bar-val">22%</span></div>
+              <div class="bar-row"><span class="bar-lbl">Comedy</span><div class="bar-track"><div class="bar-fill" style="--w:82%;"></div></div><span class="bar-val">18%</span></div>
+              <div class="bar-row"><span class="bar-lbl">Action</span><div class="bar-track"><div class="bar-fill" style="--w:73%;"></div></div><span class="bar-val">16%</span></div>
+            </div>
+            <div class="pc-links">
+              <a href="Netflix_Dashboard.twbx" class="pl pp" download>Download .twbx ↓</a>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+  </div><!-- proj-list -->
+</section>
+
+<!-- PAGE 3 — THE ARSENAL -->
+<section class="contact reveal" id="contact">
+  <div class="portal-ring"></div>
+  <div class="portal-ring"></div>
+
+  <div class="contact-kicker">Available · May 2025 · OPT Eligible · H1B Supported</div>
+  <div class="contact-title">Let's make<br>something <em>great.</em></div>
+
+  <!-- Quick links -->
+  <div class="contact-cards">
+    <a href="mailto:rashmikasri220@gmail.com" class="cc"><span>✉</span>Email</a>
+    <a href="https://www.linkedin.com/in/rashmika-sri20/" class="cc" target="_blank" rel="noopener"><span>in</span>LinkedIn</a>
+    <a href="https://github.com/Rashmika2004" class="cc" target="_blank" rel="noopener"><span>⌥</span>GitHub</a>
+    <a href="Srivastava_Rashmika_Resume2026_UMSL_.pdf" class="cc" download><span>↓</span>Resume</a>
+  </div>
+
+  <!-- Contact form — new in v7 -->
+  <div class="contact-form-wrap">
+    <div class="form-row">
+      <label class="form-label">Your Name</label>
+      <input class="form-input" type="text" placeholder="Jane Smith" id="formName">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Your Email</label>
+      <input class="form-input" type="email" placeholder="hello@company.com" id="formEmail">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Message</label>
+      <textarea class="form-textarea" placeholder="Tell me about your team or opportunity..." id="formMsg"></textarea>
+    </div>
+    <button class="form-submit" id="formSubmit" onclick="submitForm()">Send Message →</button>
+  </div>
+
+  <div class="contact-note"><a href="mailto:rashmikasri220@gmail.com" style="color:inherit;text-decoration:none;">rashmikasri220@gmail.com</a> · St. Louis, USA</div>
+</section>
+
+<footer>
+  <span class="fl">© 2025 Rashmika Srivastava · Built with purpose</span>
+  <span class="fr">Data Scientist & AI Engineer</span>
+</footer>
+
+</div><!-- scrollBody -->
+
+<!-- ══════════════════════════════════════════════════════
+     INLINE SVG ANIMATIONS (CSS keyframes for robot)
+═══════════════════════════════════════════════════════ -->
+<style>
+@keyframes legWalk { 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(2deg);} }
+@keyframes antPulse { 0%,100%{opacity:.5;} 50%{opacity:1;} }
+@keyframes eyeShift { 0%,35%,100%{transform:translateX(0);} 40%,90%{transform:translateX(3px);} }
+@keyframes scanLine { 0%{transform:translateY(0);} 100%{transform:translateY(60px);} }
+</style>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+'use strict';
+/* ══════════════════════════════════════════════════
+   BOOT SEQUENCE — 2.5s cinematic loading
+   NEW: Was missing entirely. Creates the "awakening."
+═══════════════════════════════════════════════════ */
+const bootEl = document.getElementById('boot');
+const bootText = document.getElementById('bootText');
+const bootLines = ['Loading universe...','Calibrating RASHI-BOT...','Mapping neural pathways...','Ready.'];
+let bli = 0;
+const bootInterval = setInterval(() => {
+  bootText.textContent = bootLines[Math.min(bli++, bootLines.length-1)];
+  if (bli >= bootLines.length) {
+    clearInterval(bootInterval);
+    setTimeout(() => bootEl.classList.add('done'), 400);
+  }
+}, 480);
+
+/* ══════════════════════════════════════════════════
+   CURSOR — unchanged, kept working
+═══════════════════════════════════════════════════ */
+const cur = document.getElementById('cur');
+const curR = document.getElementById('cur-r');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cur.style.left = mx+'px'; cur.style.top = my+'px'; });
+(function loop(){ rx += (mx-rx)*.12; ry += (my-ry)*.12; curR.style.left = rx+'px'; curR.style.top = ry+'px'; requestAnimationFrame(loop); })();
+document.querySelectorAll('a,button,.prh,.asr-cell,.cc,.arsenal-cat').forEach(el => {
+  el.addEventListener('mouseenter', () => { curR.style.width='52px'; curR.style.height='52px'; curR.style.borderColor='rgba(201,169,110,.8)'; });
+  el.addEventListener('mouseleave', () => { curR.style.width='32px'; curR.style.height='32px'; curR.style.borderColor='rgba(201,169,110,.5)'; });
+});
+
+/* ══════════════════════════════════════════════════
+   SCROLL PROGRESS BAR — new in v7
+═══════════════════════════════════════════════════ */
+const navProg = document.getElementById('navProgress');
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100;
+  navProg.style.width = pct + '%';
+}, { passive: true });
+
+/* ══════════════════════════════════════════════════
+   ACTIVE NAV LINKS — tracks which section you're in
+   NEW: Was missing. User always knows their position.
+═══════════════════════════════════════════════════ */
+const navSections = ['home','about','skills','projects','contact'];
+const navLinks = document.querySelectorAll('.nav-links a[data-section]');
+function updateActiveNav() {
+  const scrollMid = window.scrollY + window.innerHeight * .4;
+  let active = 'home';
+  navSections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.offsetTop <= scrollMid) active = id;
+  });
+  navLinks.forEach(a => a.classList.toggle('active', a.dataset.section === active));
+}
+window.addEventListener('scroll', updateActiveNav, { passive: true });
+
+/* ══════════════════════════════════════════════════
+   UNIVERSE CANVAS ENGINE
+   FIX: lerpColor now safely handles any hex format.
+   FIX: Scene maps to IntersectionObserver, not %
+   NEW: Added volumetric light shafts, perspective grid,
+        crystal formations per scene type.
+═══════════════════════════════════════════════════ */
+const uCanvas = document.getElementById('universeCanvas');
+const uctx = uCanvas.getContext('2d');
+let W, H;
+function resizeU() { W = uCanvas.width = window.innerWidth; H = uCanvas.height = window.innerHeight; }
+resizeU();
+window.addEventListener('resize', resizeU, { passive: true });
+
+const SCENES = [
+  { name:'HERO · DEEP SPACE',      bg1:'#04020a', bg2:'#0a0520', accentHex:'#39ff85', starHex:'#c9a96e' },
+  { name:'ORIGIN · NEBULA CORE',   bg1:'#050212', bg2:'#0c0328', accentHex:'#c9a96e', starHex:'#e8d5b0' },
+  { name:'MISSION 01 · BIO LAB',   bg1:'#030e08', bg2:'#061a0e', accentHex:'#39ff85', starHex:'#39ff85' },
+  { name:'MISSION 02 · MIND RIFT', bg1:'#0e0310', bg2:'#1a0520', accentHex:'#d4849a', starHex:'#d4849a' },
+  { name:'MISSION 03 · MATRIX',    bg1:'#021218', bg2:'#041e28', accentHex:'#38cfff', starHex:'#38cfff' },
+  { name:'MISSION 04 · RED ZONE',  bg1:'#120204', bg2:'#200408', accentHex:'#ff6b6b', starHex:'#ff9999' },
+  { name:'MISSION 05 · GOLD FLOW', bg1:'#0d0900', bg2:'#1a1200', accentHex:'#c9a96e', starHex:'#e8d5b0' },
+  { name:'CONTACT · THE PORTAL',   bg1:'#04020a', bg2:'#060312', accentHex:'#c9a96e', starHex:'#c9a96e' },
+];
+
+/* Parse hex safely — FIX for original lerpColor bug */
+function hexToRgb(hex) {
+  hex = hex.replace('#','');
+  if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+  return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+}
+function lerpVal(a,b,t){ return a+(b-a)*t; }
+function lerpRgb(rgb1, rgb2, t){
+  return rgb1.map((v,i) => Math.round(lerpVal(v, rgb2[i], t)));
+}
+
+/* Precompute RGB for all scenes */
+SCENES.forEach(s => {
+  s.bg1Rgb = hexToRgb(s.bg1);
+  s.bg2Rgb = hexToRgb(s.bg2);
+  s.accentRgb = hexToRgb(s.accentHex);
+  s.starRgb = hexToRgb(s.starHex);
+});
+
+/* Procedural scene elements */
+const STARS = Array.from({length:260}, () => ({
+  x: Math.random(), y: Math.random(),
+  size: Math.random()*1.8+.2,
+  speed: Math.random()*.4+.05,
+  tw: Math.random()*Math.PI*2,
+  depth: Math.random()
+}));
+const PARTICLES = Array.from({length:50}, () => ({
+  x: Math.random(), y: Math.random(),
+  size: Math.random()*3+.8,
+  vx: (Math.random()-.5)*.0008,
+  vy: (Math.random()-.5)*.0008,
+  alpha: Math.random()*.5+.1,
+  phase: Math.random()*Math.PI*2
+}));
+const CRYSTALS = Array.from({length:10}, () => ({
+  x: Math.random(), y: .45+Math.random()*.55,
+  h: .05+Math.random()*.12, w: .007+Math.random()*.008,
+  alpha: Math.random()*.25+.05
+}));
+
+let t = 0, currentScene = 0, targetScene = 0, sceneBlend = 0;
+
+function drawUniverse() {
+  t += .007;
+  sceneBlend = Math.min(sceneBlend + .022, 1);
+  if (sceneBlend >= .99) { currentScene = targetScene; sceneBlend = 0; }
+
+  const s0 = SCENES[currentScene];
+  const s1 = SCENES[targetScene];
+  const bl = sceneBlend;
+
+  const bg1 = lerpRgb(s0.bg1Rgb, s1.bg1Rgb, bl);
+  const bg2 = lerpRgb(s0.bg2Rgb, s1.bg2Rgb, bl);
+  const accent = lerpRgb(s0.accentRgb, s1.accentRgb, bl);
+  const star = lerpRgb(s0.starRgb, s1.starRgb, bl);
+  const [ar,ag,ab] = accent;
+  const [sr,sg,sb] = star;
+
+  /* Background radial */
+  const grad = uctx.createRadialGradient(W*.5, H*.38, 0, W*.5, H*.5, W*.8);
+  grad.addColorStop(0, `rgb(${bg2})`);
+  grad.addColorStop(1, `rgb(${bg1})`);
+  uctx.fillStyle = grad;
+  uctx.fillRect(0,0,W,H);
+
+  /* Ground plane */
+  const gY = H * .7;
+  const groundG = uctx.createLinearGradient(0,gY,0,H);
+  groundG.addColorStop(0, `rgba(${ar},${ag},${ab},.04)`);
+  groundG.addColorStop(.6, 'rgba(0,0,0,.35)');
+  groundG.addColorStop(1, 'rgba(0,0,0,.8)');
+  uctx.fillStyle = groundG;
+  uctx.fillRect(0,gY,W,H-gY);
+
+  /* Perspective grid */
+  uctx.save();
+  uctx.globalAlpha = .055 + Math.sin(t*.4)*.02;
+  uctx.strokeStyle = `rgb(${ar},${ag},${ab})`;
+  uctx.lineWidth = .5;
+  const vp = {x:W/2, y:gY};
+  for (let i=-10; i<=10; i++) {
+    const xEnd = W/2 + i*(W/9);
+    uctx.beginPath(); uctx.moveTo(vp.x,vp.y); uctx.lineTo(xEnd,H); uctx.stroke();
+  }
+  for (let j=0; j<8; j++) {
+    const yy = gY+(H-gY)*(j/8);
+    const spread = (yy-gY)/(H-gY);
+    uctx.beginPath(); uctx.moveTo(W/2-spread*W*.75,yy); uctx.lineTo(W/2+spread*W*.75,yy); uctx.stroke();
+  }
+  uctx.restore();
+
+  /* Crystal formations */
+  CRYSTALS.forEach((c,i) => {
+    const cx = c.x*W, cy = c.y*H, ch = c.h*H, cw = c.w*W;
+    const glow = (Math.sin(t*.7+i)*.5+.5)*c.alpha;
+    uctx.save();
+    uctx.globalAlpha = glow;
+    uctx.fillStyle = `rgb(${ar},${ag},${ab})`;
+    uctx.beginPath(); uctx.moveTo(cx,cy); uctx.lineTo(cx-cw/2,cy+ch); uctx.lineTo(cx+cw/2,cy+ch); uctx.closePath(); uctx.fill();
+    const cg = uctx.createRadialGradient(cx,cy+ch*.5,0,cx,cy+ch*.5,cw*4);
+    cg.addColorStop(0,`rgba(${ar},${ag},${ab},.12)`); cg.addColorStop(1,'transparent');
+    uctx.fillStyle=cg; uctx.fillRect(cx-cw*5,cy,cw*10,ch);
+    uctx.restore();
+  });
+
+  /* Light shafts */
+  for (let r=0; r<5; r++) {
+    const rx = W*(0.15+r*.17) + Math.sin(t*.25+r)*W*.04;
+    const rh = H*.68;
+    const rayG = uctx.createLinearGradient(rx,0,rx,rh);
+    rayG.addColorStop(0, `rgba(${ar},${ag},${ab},${.018+r*.003})`);
+    rayG.addColorStop(1,'transparent');
+    uctx.save();
+    uctx.globalAlpha = .45 + Math.sin(t*.35+r)*.35;
+    uctx.fillStyle = rayG;
+    uctx.beginPath(); uctx.moveTo(rx-18,0); uctx.lineTo(rx+18,0); uctx.lineTo(rx+55,rh); uctx.lineTo(rx-55,rh); uctx.closePath(); uctx.fill();
+    uctx.restore();
+  }
+
+  /* Stars */
+  STARS.forEach(s => {
+    const sx = s.x*W, sy = s.y*H;
+    const tw = Math.sin(t*s.speed+s.tw)*.5+.5;
+    uctx.save();
+    uctx.globalAlpha = tw * (s.depth*.6+.2);
+    uctx.fillStyle = `rgb(${sr},${sg},${sb})`;
+    uctx.beginPath(); uctx.arc(sx,sy,s.size*tw,0,Math.PI*2); uctx.fill();
+    if (s.size > 1.2) {
+      const sg2 = uctx.createRadialGradient(sx,sy,0,sx,sy,s.size*5);
+      sg2.addColorStop(0,`rgba(${sr},${sg},${sb},.25)`); sg2.addColorStop(1,'transparent');
+      uctx.fillStyle = sg2;
+      uctx.beginPath(); uctx.arc(sx,sy,s.size*5,0,Math.PI*2); uctx.fill();
+    }
+    uctx.restore();
+  });
+
+  /* Floating particles */
+  PARTICLES.forEach(p => {
+    p.x += p.vx + Math.sin(t*.45+p.phase)*.00018;
+    p.y += p.vy + Math.cos(t*.35+p.phase)*.00010;
+    if (p.x<0) p.x=1; if (p.x>1) p.x=0;
+    if (p.y<0) p.y=1; if (p.y>1) p.y=0;
+    const alpha = p.alpha * (Math.sin(t+p.phase)*.3+.7);
+    uctx.save();
+    uctx.globalAlpha = alpha*.45;
+    const pg = uctx.createRadialGradient(p.x*W,p.y*H,0,p.x*W,p.y*H,p.size*3);
+    pg.addColorStop(0,`rgb(${ar},${ag},${ab})`); pg.addColorStop(1,'transparent');
+    uctx.fillStyle=pg; uctx.beginPath(); uctx.arc(p.x*W,p.y*H,p.size*3,0,Math.PI*2); uctx.fill();
+    uctx.restore();
+  });
+
+  /* Scan line */
+  const sY = (t*70) % H;
+  const scanG = uctx.createLinearGradient(0,sY-16,0,sY+16);
+  scanG.addColorStop(0,'transparent'); scanG.addColorStop(.5,`rgba(${ar},${ag},${ab},.035)`); scanG.addColorStop(1,'transparent');
+  uctx.fillStyle=scanG; uctx.fillRect(0,sY-16,W,32);
+
+  requestAnimationFrame(drawUniverse);
+}
+drawUniverse();
+
+/* Scene label */
+const sceneLabel = document.getElementById('sceneLabel');
+function setScene(idx) {
+  idx = Math.min(idx, SCENES.length-1);
+  if (idx === targetScene) return;
+  targetScene = idx;
+  sceneLabel.style.opacity = '0';
+  setTimeout(() => { sceneLabel.textContent = SCENES[idx].name; sceneLabel.style.opacity = '1'; }, 300);
+}
+
+/* ── Section → Scene mapping via IntersectionObserver ──
+   FIX: Now uses actual element visibility, not scroll %.
+   More reliable across different viewport sizes. */
+const sectionSceneMap = {
+  'home':0, 'about':1, 'skills':2, 'projects':2, 'contact':7,
+  'p1':2, 'p2':3, 'p3':4, 'p4':5, 'p5':6
+};
+const sectionObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting && sectionSceneMap[e.target.id] !== undefined) {
+      setScene(sectionSceneMap[e.target.id]);
+    }
+  });
+}, { threshold: .3 });
+['home','about','skills','projects','contact'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) sectionObserver.observe(el);
+});
+
+/* ══════════════════════════════════════════════════
+   PROJECT MINI CANVASES
+   FIX: Only animate when drawer is open (performance).
+   Uses ResizeObserver instead of hardcoded size.
+═══════════════════════════════════════════════════ */
+const activeCanvasLoops = new Map(); // track which are running
+
+function startProjectCanvas(canvasEl) {
+  if (activeCanvasLoops.has(canvasEl.id)) return;
+  const ctx = canvasEl.getContext('2d');
+  const accentHex = canvasEl.dataset.accent || '#c9a96e';
+  const bg1 = canvasEl.dataset.bg1 || '#04020a';
+  const bg2 = canvasEl.dataset.bg2 || '#0a061a';
+  const [ar,ag,ab] = hexToRgb(accentHex);
+  const b1r = hexToRgb(bg1), b2r = hexToRgb(bg2);
+
+  const stars = Array.from({length:80}, () => ({
+    x:Math.random(), y:Math.random(), s:Math.random()*1.6+.3,
+    tw:Math.random()*Math.PI*2, sp:Math.random()*.5+.1
+  }));
+  const pts = Array.from({length:18}, () => ({
+    x:Math.random(), y:Math.random(), s:Math.random()*2+.8,
+    p:Math.random()*Math.PI*2, vx:(Math.random()-.5)*.0018, vy:(Math.random()-.5)*.0018
+  }));
+  let pt = 0, running = true;
+
+  activeCanvasLoops.set(canvasEl.id, () => { running = false; });
+
+  function draw() {
+    if (!running) return;
+    const w = canvasEl.offsetWidth || 600;
+    const h = canvasEl.offsetHeight || 480;
+    if (canvasEl.width !== w) canvasEl.width = w;
+    if (canvasEl.height !== h) canvasEl.height = h;
+
+    const bg = ctx.createLinearGradient(0,0,w,h);
+    bg.addColorStop(0,`rgb(${b1r})`); bg.addColorStop(1,`rgb(${b2r})`);
+    ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
+
+    /* Grid */
+    ctx.save(); ctx.globalAlpha=.06; ctx.strokeStyle=accentHex; ctx.lineWidth=.5;
+    for(let i=0;i<w;i+=44){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,h);ctx.stroke();}
+    for(let j=0;j<h;j+=44){ctx.beginPath();ctx.moveTo(0,j);ctx.lineTo(w,j);ctx.stroke();}
+    ctx.restore();
+
+    /* Stars */
+    stars.forEach(s => {
+      const tw2 = Math.sin(pt*s.sp+s.tw)*.5+.5;
+      ctx.save(); ctx.globalAlpha=tw2*.65; ctx.fillStyle=accentHex;
+      ctx.beginPath(); ctx.arc(s.x*w,s.y*h,s.s,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    });
+
+    /* Particles */
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if(p.x<0)p.x=1;if(p.x>1)p.x=0;if(p.y<0)p.y=1;if(p.y>1)p.y=0;
+      const pg = ctx.createRadialGradient(p.x*w,p.y*h,0,p.x*w,p.y*h,p.s*7);
+      pg.addColorStop(0,`rgba(${ar},${ag},${ab},.4)`); pg.addColorStop(1,'transparent');
+      ctx.save(); ctx.fillStyle=pg; ctx.fillRect(p.x*w-p.s*7,p.y*h-p.s*7,p.s*14,p.s*14); ctx.restore();
+    });
+
+    /* Scan */
+    const sy = (pt*36) % h;
+    const sg = ctx.createLinearGradient(0,sy-8,0,sy+8);
+    sg.addColorStop(0,'transparent'); sg.addColorStop(.5,`rgba(${ar},${ag},${ab},.07)`); sg.addColorStop(1,'transparent');
+    ctx.fillStyle=sg; ctx.fillRect(0,sy-8,w,16);
+    pt += .007;
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function stopProjectCanvas(id) {
+  const stop = activeCanvasLoops.get(id);
+  if (stop) { stop(); activeCanvasLoops.delete(id); }
+}
+
+/* ══════════════════════════════════════════════════
+   PROJECT ACCORDION
+   Enhanced: opens canvas on expand, stops on close.
+   Shifts universe scene to match project theme.
+═══════════════════════════════════════════════════ */
+const sceneMap = { p1:2, p2:3, p3:4, p4:5, p5:6 };
+function openProject(id) {
+  const row = document.getElementById(id);
+  const isOpen = row.classList.contains('open');
+
+  document.querySelectorAll('.proj-row.open').forEach(r => {
+    r.classList.remove('open');
+    const c = r.querySelector('.proj-scene-canvas');
+    if (c) stopProjectCanvas(c.id);
+  });
+
+  if (!isOpen) {
+    row.classList.add('open');
+    setScene(sceneMap[id] || 2);
+    const c = row.querySelector('.proj-scene-canvas');
+    if (c) setTimeout(() => startProjectCanvas(c), 80);
+    setTimeout(() => row.querySelector('.drawer').scrollIntoView({behavior:'smooth',block:'nearest'}), 160);
+  } else {
+    setScene(1); // Return to about scene when closing
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   HERO RASHI-BOT SPEECH
+   Typewriter in speech bubble, rotates messages.
+═══════════════════════════════════════════════════ */
+const heroLines = [
+  "Hi! I'm RASHI-BOT 🤖 Click any mission below to explore my projects!",
+  "Rashmika's neural net hit 89.47% accuracy on diabetes prediction with SHAP explainability.",
+  "She built Linear Regression from scratch. No sklearn. Pure closed-form OLS math. 0% error.",
+  "Each mission shows: the problem, the process, the result. Scroll down to begin.",
+  "OPT eligible. Graduating May 2025. Looking for a team that builds things that matter.",
+];
+let hli = 0;
+function typeHeroLine(line, cb) {
+  const el = document.getElementById('heroSpeech');
+  el.textContent = ''; let i = 0;
+  const ti = setInterval(() => {
+    el.textContent += line[i++];
+    if (i >= line.length) { clearInterval(ti); setTimeout(cb, 3400); }
+  }, 24);
+}
+function nextHeroLine() { typeHeroLine(heroLines[hli++ % heroLines.length], nextHeroLine); }
+setTimeout(nextHeroLine, 2600);
+
+function robotTalk() {
+  const line = heroLines[Math.floor(Math.random()*heroLines.length)];
+  const el = document.getElementById('heroSpeech');
+  el.textContent = ''; let i = 0;
+  const ti = setInterval(() => { el.textContent += line[i++]; if(i>=line.length)clearInterval(ti); }, 20);
+  /* Sparkle burst */
+  for (let j=0; j<14; j++) {
+    const d = document.createElement('div');
+    const ang = (j/14)*360;
+    const dist = 40+Math.random()*60;
+    d.style.cssText = `position:fixed;left:${window.innerWidth*.75}px;top:${window.innerHeight*.5}px;font-size:${10+Math.random()*10}px;color:${['#c9a96e','#39ff85','#38cfff','#d4849a'][j%4]};z-index:9995;pointer-events:none;transition:all .9s ease;opacity:1;`;
+    d.textContent = ['✦','◆','✧','★','◇'][j%5];
+    document.body.appendChild(d);
+    setTimeout(() => {
+      d.style.transform = `translate(${Math.cos(ang*Math.PI/180)*dist}px,${Math.sin(ang*Math.PI/180)*dist}px)`;
+      d.style.opacity='0';
+    }, 50);
+    setTimeout(() => d.remove(), 950);
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   TYPEWRITER (hero role)
+═══════════════════════════════════════════════════ */
+const roles = ['Data Scientist','ML Engineer','NLP Explorer','AI Builder','BI Analyst'];
+let ri=0, ci=0, deleting=false;
+const tel = document.getElementById('typed');
+function type() {
+  const w = roles[ri];
+  if (!deleting) {
+    tel.textContent = w.slice(0,++ci);
+    if (ci===w.length) { deleting=true; setTimeout(type,2400); return; }
+  } else {
+    tel.textContent = w.slice(0,--ci);
+    if (ci===0) { deleting=false; ri=(ri+1)%roles.length; }
+  }
+  setTimeout(type, deleting?52:108);
+}
+type();
+
+/* ══════════════════════════════════════════════════
+   TICKER
+═══════════════════════════════════════════════════ */
+const tItems = ['Data Scientist','Machine Learning','Python','TensorFlow','SQL','Tableau','Power BI','Neural Networks','SHAP','AWS','Azure','Open to Work','OPT Eligible','May 2025'];
+const tt = document.getElementById('ttrack');
+tt.innerHTML = (tItems.map(i=>`<span class="tk">${i} <span style="opacity:.4">◆</span></span>`).join('')).repeat(2);
+
+/* ══════════════════════════════════════════════════
+   COUNTER ANIMATION
+═══════════════════════════════════════════════════ */
+function countUp(el, target, suf, dur=1800) {
+  let s=0, step=target/dur*16;
+  const f = () => { s=Math.min(s+step,target); el.textContent=Math.floor(s)+suf; if(s<target)requestAnimationFrame(f); };
+  requestAnimationFrame(f);
+}
+const counterObs = new IntersectionObserver(e => {
+  if (e[0].isIntersecting) {
+    countUp(document.getElementById('hn1'),89,'%');
+    countUp(document.getElementById('hn2'),94,'%');
+    countUp(document.getElementById('hn3'),8,'+');
+    counterObs.disconnect();
+  }
+},{ threshold:.3 });
+counterObs.observe(document.querySelector('.hero-stats'));
+
+/* ══════════════════════════════════════════════════
+   SCROLL REVEAL — universal
+═══════════════════════════════════════════════════ */
+const revealObs = new IntersectionObserver(entries =>
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); }),
+  { threshold:.07 }
+);
+document.querySelectorAll('.reveal,.story-beat,.arsenal-cat').forEach(el => revealObs.observe(el));
+
+/* ══════════════════════════════════════════════════
+   CONTACT FORM — new in v7
+   Simple client-side feedback (no backend needed).
+   Replace action with your FormSubmit/Netlify endpoint.
+═══════════════════════════════════════════════════ */
+function submitForm() {
+  const name = document.getElementById('formName').value.trim();
+  const email = document.getElementById('formEmail').value.trim();
+  const msg = document.getElementById('formMsg').value.trim();
+  const btn = document.getElementById('formSubmit');
+  if (!name || !email || !msg) { btn.textContent = '⚠ Please fill all fields'; return; }
+  btn.textContent = 'Sending...'; btn.style.opacity='.7';
+  setTimeout(() => {
+    btn.textContent = '✓ Message Sent!';
+    btn.classList.add('sent');
+    btn.style.opacity='1';
+    document.getElementById('formName').value='';
+    document.getElementById('formEmail').value='';
+    document.getElementById('formMsg').value='';
+  }, 1200);
+}
+
+/* ══════════════════════════════════════════════════
+   SMOOTH NAV LINKS
+═══════════════════════════════════════════════════ */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const tgt = document.querySelector(a.getAttribute('href'));
+    if (tgt) tgt.scrollIntoView({behavior:'smooth'});
+  });
+});
+
+setScene(0);
+
+/* ═══════════════════════════════════════
+   MOBILE MENU
+═══════════════════════════════════════ */
+function toggleMobMenu() {
+  var btn = document.getElementById('mobMenuBtn');
+  var ov  = document.getElementById('mobOverlay');
+  btn.classList.toggle('open');
+  ov.classList.toggle('open');
+  document.body.style.overflow = ov.classList.contains('open') ? 'hidden' : '';
+}
+function closeMobMenu() {
+  document.getElementById('mobMenuBtn').classList.remove('open');
+  document.getElementById('mobOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.mob-nav-overlay a').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    e.preventDefault();
+    var href = a.getAttribute('href');
+    closeMobMenu();
+    setTimeout(function() {
+      var t = document.querySelector(href);
+      if (t) t.scrollIntoView({behavior:'smooth'});
+    }, 300);
+  });
+});
+
+/* ═══════════════════════════════════════
+   3D KEYBOARD
+═══════════════════════════════════════ */
+(function() {
+  var CAT_C = {
+    'cat-ml':'#39ff85','cat-lang':'#38cfff',
+    'cat-data':'#d4849a','cat-cloud':'#c9a96e','cat-spec':'#9d7de8'
+  };
+  function getKC(el) {
+    var cls = Object.keys(CAT_C);
+    for (var i=0;i<cls.length;i++) if (el.classList.contains(cls[i])) return CAT_C[cls[i]];
+    return '#c9a96e';
+  }
+  function activateKey(el) {
+    if (!el || !el.dataset.n) return;
+    document.querySelectorAll('.key.active').forEach(function(k){k.classList.remove('active');});
+    el.classList.add('active');
+    var color = getKC(el);
+    var idle   = document.getElementById('kbIdle');
+    var detail = document.getElementById('kbDetail');
+    var info   = document.getElementById('kbInfo');
+    if (!idle||!detail||!info) return;
+    idle.classList.add('off');
+    detail.classList.add('on');
+    info.classList.add('lit');
+    info.style.setProperty('--info-c', color);
+    var badge=document.getElementById('detBadge'); if(badge) badge.style.color=color;
+    var dot=document.getElementById('detDot');     if(dot)   dot.style.background=color;
+    var cat=document.getElementById('detCat');     if(cat)   cat.textContent=el.dataset.c||'';
+    var nm=document.getElementById('detName');     if(nm){   nm.style.color=color; nm.textContent=el.dataset.n||'';}
+    var dsc=document.getElementById('detDesc');    if(dsc)   dsc.textContent=el.dataset.d||'';
+    var lvn=document.getElementById('detLvName');  if(lvn)   lvn.textContent=el.dataset.ln||'';
+    var bar=document.getElementById('detBar');
+    if(bar){bar.style.width='0%'; requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width=(el.dataset.l||0)+'%';});});}
+    var chip=document.getElementById('detKeyChip');
+    if(chip){var r=el.dataset.k||''; chip.textContent=r.length===1?r.toUpperCase():r;}
+  }
+  document.querySelectorAll('.key').forEach(function(k){
+    k.addEventListener('mouseenter',function(){activateKey(k);});
+  });
+  var KM={};
+  document.querySelectorAll('.key[data-k]').forEach(function(k){
+    var r=k.dataset.k; KM[r]=k; KM[r.toLowerCase()]=k; KM[r.toUpperCase()]=k;
+  });
+  var ALIAS={
+    'Escape':'Escape','F1':'F1','F2':'F2','F3':'F3','F4':'F4',
+    'F5':'F5','F6':'F6','F7':'F7','F8':'F8','F9':'F9',
+    'F10':'F10','F11':'F11','F12':'F12',
+    'Backspace':'Backspace','Tab':'Tab','CapsLock':'CapsLock','Enter':'Enter',
+    'ShiftLeft':'Shift','ShiftRight':'ShiftRight',
+    'ControlLeft':'Control','ControlRight':'ControlRight',
+    'AltLeft':'Alt','AltRight':'AltRight',
+    'MetaLeft':'Meta','MetaRight':'Meta',
+    'ContextMenu':'ContextMenu','Space':' '
+  };
+  document.addEventListener('keydown',function(e){
+    if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+    var target=KM[ALIAS[e.code]]||KM[ALIAS[e.key]]||KM[e.key]||KM[(e.key||'').toLowerCase()];
+    if(target){if(e.key===' '||e.key==='Tab')e.preventDefault(); activateKey(target);}
+  });
+  document.addEventListener('keyup',function(){
+    setTimeout(function(){document.querySelectorAll('.key.active').forEach(function(k){k.classList.remove('active');});},200);
+  });
+})();
+</script>
+</body>
+</html>
